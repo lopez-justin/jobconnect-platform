@@ -1,0 +1,18 @@
+name: jobconnect-platform
+services:
+  postgresql:
+    container_name: jobconnect-postgres
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: jobconnect_db
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U $${DB_USERNAME}' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - "$HOME$/.docker/db_volumes/jobconnect_db:/var/lib/postgresql"

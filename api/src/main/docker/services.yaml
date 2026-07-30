@@ -1,0 +1,6 @@
+name: jobconnect-platform
+services:
+  postgresql:
+    extends:
+      file: ./postgresql.yaml
+      service: postgresql
