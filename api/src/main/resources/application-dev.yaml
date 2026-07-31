@@ -17,3 +17,9 @@ logging:
   level:
     com.justinlopez.jobconnect: DEBUG
     org.hibernate.SQL: DEBUG
+
+
+app:
+  admin:
+    email: ${ADMIN_EMAIL}
+    password: ${ADMIN_PASSWORD}
