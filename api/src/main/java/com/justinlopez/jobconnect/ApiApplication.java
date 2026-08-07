@@ -41,7 +41,7 @@ public class ApiApplication {
         return _ -> {
             log.info("Checking if admin user exists: {}", adminEmail);
 
-            if (!userRepository.existsByEmail(adminEmail)) {
+            if (!userRepository.existsByEmailIgnoreCase(adminEmail)) {
                 Role adminRole = roleRepository.findByName(UserRoleName.ADMIN)
                         .orElseThrow(() -> new IllegalStateException("Role 'ADMIN' not found in database."));
 

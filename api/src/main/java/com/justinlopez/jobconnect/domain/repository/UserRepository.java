@@ -10,6 +10,7 @@ public interface UserRepository {
     User save(User user);
     Optional<User> findById(UUID id);
     Optional<User> findByEmail(String email);
-    boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
+    boolean existsByPhone(String phone);
 
 }
