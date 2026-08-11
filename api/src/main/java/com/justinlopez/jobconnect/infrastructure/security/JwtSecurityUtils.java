@@ -15,6 +15,7 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -179,6 +180,13 @@ public class JwtSecurityUtils {
         Object rolesClaim = claims.get(CLAIM_ROLES);
         if (rolesClaim == null) {
             return List.of();
+        }
+        if (rolesClaim instanceof String) {
+            String rolesString = (String) rolesClaim;
+            if (rolesString.isEmpty()) {
+                return List.of();
+            }
+            return Arrays.asList(rolesString.split(","));
         }
         return (List<String>) rolesClaim;
     }
