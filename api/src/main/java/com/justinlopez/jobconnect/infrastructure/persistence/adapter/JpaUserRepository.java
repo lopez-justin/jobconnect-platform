@@ -37,7 +37,13 @@ public class JpaUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean existsByEmail(String email) {
+    public boolean existsByEmailIgnoreCase(String email) {
         return this.repository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByPhone(String phone) {
+        return this.repository
+                .existsByPhone(phone);
     }
 }
