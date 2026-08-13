@@ -1,10 +1,12 @@
 package com.justinlopez.jobconnect.domain.model.vo;
 
+import java.math.BigDecimal;
+
 public record Address(
         String street,
         String city,
-        Double latitude,
-        Double longitude
+        BigDecimal latitude,
+        BigDecimal longitude
 ) {
 
     public Address {
@@ -14,10 +16,10 @@ public record Address(
         if (city == null || city.isBlank()) {
             throw new IllegalArgumentException("City cannot be null or blank");
         }
-        if (latitude == null || latitude < -90 || latitude > 90) {
+        if (latitude == null || latitude.compareTo(BigDecimal.valueOf(-90)) < 0 || latitude.compareTo(BigDecimal.valueOf(90)) > 0) {
             throw new IllegalArgumentException("Latitude must be between -90 and 90");
         }
-        if (longitude == null || longitude < -180 || longitude > 180) {
+        if (longitude == null || longitude.compareTo(BigDecimal.valueOf(-180)) < 0 || longitude.compareTo(BigDecimal.valueOf(180)) > 0) {
             throw new IllegalArgumentException("Longitude must be between -180 and 180");
         }
     }
