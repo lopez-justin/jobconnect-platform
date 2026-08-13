@@ -145,4 +145,48 @@ public class Job {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public UUID getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public Money getBudget() {
+        return budget;
+    }
+
+    public Address getLocation() {
+        return location;
+    }
+
+    public UserId getClientId() {
+        return clientId;
+    }
+
+    public UserId getSelectedProfessionalId() {
+        return selectedProfessionalId;
+    }
+
+    public JobStatus getStatus() {
+        return status;
+    }
+
+    public void setSelectedProfessionalId(UserId selectedProfessionalId) {
+        this.selectedProfessionalId = selectedProfessionalId;
+    }
+
+    public void setStatus(JobStatus status) {
+        this.status = status;
+    }
+
 }
