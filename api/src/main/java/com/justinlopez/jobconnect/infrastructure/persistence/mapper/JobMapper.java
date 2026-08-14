@@ -41,9 +41,9 @@ public interface JobMapper {
     @Mapping(target = "clientId", source = "client.id", qualifiedByName = "uuidToUserId")
     @Mapping(target = "selectedProfessionalId", source = "selectedProfessionalId", qualifiedByName = "uuidToUserId")
     @Mapping(target = "category", source = "category")
-    @Mapping(target = "offers", ignore = true)
+    /*@Mapping(target = "offers", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)*/
     Job toDomain(JobEntity jobEntity);
 
 
