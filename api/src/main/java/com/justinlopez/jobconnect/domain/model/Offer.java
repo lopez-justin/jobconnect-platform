@@ -10,6 +10,7 @@ import java.util.UUID;
 public class Offer {
 
     private final UUID id;
+    private final UUID jobId;
     private final UserId professionalId;
     private final Money offeredPrice;
     private final String message;
@@ -17,8 +18,9 @@ public class Offer {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public Offer(UUID id, UserId professionalId, Money offeredPrice, String message) {
+    public Offer(UUID id, UUID jobId, UserId professionalId, Money offeredPrice, String message) {
         this.id = id;
+        this.jobId = jobId;
         this.professionalId = professionalId;
         this.offeredPrice = offeredPrice;
         this.message = message;
@@ -55,6 +57,10 @@ public class Offer {
         return id;
     }
 
+    public UUID getJobId() {
+        return jobId;
+    }
+
     public OfferStatus getStatus() {
         return status;
     }
@@ -62,4 +68,21 @@ public class Offer {
     public UserId getProfessionalId() {
         return professionalId;
     }
+
+    public Money getOfferedPrice() {
+        return offeredPrice;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setStatus(OfferStatus status) {
+        this.status = status;
+    }
+
 }
