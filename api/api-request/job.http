@@ -1,0 +1,16 @@
+### POST request to create a job
+POST http://localhost:8080/api/v1/jobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Desarrollo de landing page",
+  "description": "Necesito una landing page moderna para una clínica con formulario de contacto y sección de servicios.",
+  "categoryId": "019fb463-f2a7-750d-a2a2-80902bb5cf3e",
+  "budgetAmount": 1500.00,
+  "budgetCurrency": "USD",
+  "street": "Av. Siempre Viva 123",
+  "city": "Montevideo",
+  "latitude": -34.901112,
+  "longitude": -56.164532
+}
