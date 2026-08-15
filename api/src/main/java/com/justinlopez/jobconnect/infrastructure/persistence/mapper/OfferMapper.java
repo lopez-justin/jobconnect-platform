@@ -27,7 +27,7 @@ public interface OfferMapper {
 
 
 
-    //@Mapping(target = "jobId", source = "job.id")
+    @Mapping(target = "jobId", source = "job.id")
     @Mapping(target = "professionalId", source = "professional.id", qualifiedByName = "uuidToUserId")
     @Mapping(target = "offeredPrice", source = ".", qualifiedByName = "toMoneyFromOffer")
     @Mapping(target = "createdAt", ignore = true)
