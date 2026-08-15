@@ -181,6 +181,10 @@ public class Job {
         return status;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public void setSelectedProfessionalId(UserId selectedProfessionalId) {
         this.selectedProfessionalId = selectedProfessionalId;
     }

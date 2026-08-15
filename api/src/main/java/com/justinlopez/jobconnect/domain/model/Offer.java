@@ -81,6 +81,10 @@ public class Offer {
         return createdAt;
     }
 
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
     public void setStatus(OfferStatus status) {
         this.status = status;
     }
