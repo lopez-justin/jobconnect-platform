@@ -4,7 +4,7 @@ POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "professional3@test.com",
+  "email": "ciente100@test.com",
   "password": "123456"
 }
 
@@ -16,11 +16,11 @@ POST http://localhost:8080/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "email": "professional3@test.com",
-  "fullName": "Professional 3",
+  "email": "profesional300@test.com",
+  "fullName": "Professional 300",
   "password": "123456",
   "confirmPassword": "123456",
-  "phone": "0999654532",
+  "phone": "0999694511",
   "role": "PROFESSIONAL"
 }
 

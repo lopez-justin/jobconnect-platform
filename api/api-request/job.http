@@ -4,10 +4,10 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "title": "Trabajo 1 para client@gmail.com",
-  "description": "Descripcion del trabajo 1",
+  "title": "100",
+  "description": "Descripcion del trabajo 100",
   "categoryId": "019fb463-f2a7-7426-91aa-4a907a41fc44",
-  "budgetAmount": 1100.00,
+  "budgetAmount": 100.00,
   "budgetCurrency": "USD",
   "street": "Av. Siempre Viva 123",
   "city": "Montevideo",
@@ -18,5 +18,13 @@ Authorization: Bearer {{token}}
 
 ### GET request to retrieve all published jobs
 GET http://localhost:8080/api/v1/jobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### POST request to accept a offer for a job
+@jobId = 5d514c81-76aa-4bd5-8712-8ac1eb790cd8
+@offerId = 387a9f90-7aa8-45d0-a8e6-5ec7fa549d72
+POST http://localhost:8080/api/v1/jobs/{{jobId}}/offers/{{offerId}}/accept
 Content-Type: application/json
 Authorization: Bearer {{token}}

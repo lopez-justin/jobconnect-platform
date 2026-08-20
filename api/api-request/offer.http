@@ -5,7 +5,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "jobId": "cd450102-86dd-452f-b427-e7bdb064b98b",
-  "offeredPrice": 1200.00,
-  "message": "Oferta para el trabajo 1"
+  "jobId": "5d514c81-76aa-4bd5-8712-8ac1eb790cd8",
+  "offeredPrice": 100.00,
+  "message": "Oferta para el trabajo 100"
 }

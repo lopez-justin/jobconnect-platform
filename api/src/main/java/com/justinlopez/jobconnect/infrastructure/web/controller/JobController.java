@@ -2,6 +2,7 @@ package com.justinlopez.jobconnect.infrastructure.web.controller;
 
 import com.justinlopez.jobconnect.application.dto.request.CreateJobRequest;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
+import com.justinlopez.jobconnect.application.service.AcceptOfferUseCase;
 import com.justinlopez.jobconnect.application.service.CreateJobUseCase;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class JobController {
 
     private final CreateJobUseCase createJobUseCase;
+    private final AcceptOfferUseCase acceptOfferUseCase;
     private final JobRepository jobRepository;
 
     @PostMapping
@@ -45,6 +47,18 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{jobId}/offers/{offerId}/accept")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<JobResponse> acceptOffer(
+            @PathVariable UUID jobId,
+            @PathVariable UUID offerId,
+            @AuthenticationPrincipal CustomUserDetailsService.UserWithId userDetails) {
+
+        UUID clientId = userDetails.getUserId();
+        JobResponse response = this.acceptOfferUseCase.execute(jobId, offerId, clientId);
+        return ResponseEntity.ok(response);
+    }
+
     private JobResponse mapToResponse(Job job) {
         return new JobResponse(
                 job.getId(),
@@ -58,6 +72,7 @@ public class JobController {
                 job.getLocation().latitude(),
                 job.getLocation().longitude(),
                 job.getClientId().value(),
+                job.getSelectedProfessionalId() != null ? job.getSelectedProfessionalId().value() : null,
                 job.getStatus(),
                 job.getCreatedAt()
         );
