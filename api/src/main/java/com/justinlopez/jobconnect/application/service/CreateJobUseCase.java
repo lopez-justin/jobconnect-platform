@@ -1,0 +1,85 @@
+package com.justinlopez.jobconnect.application.service;
+
+import com.justinlopez.jobconnect.application.dto.request.CreateJobRequest;
+import com.justinlopez.jobconnect.application.dto.response.JobResponse;
+import com.justinlopez.jobconnect.domain.model.Category;
+import com.justinlopez.jobconnect.domain.model.Job;
+import com.justinlopez.jobconnect.domain.model.vo.Address;
+import com.justinlopez.jobconnect.domain.model.vo.Money;
+import com.justinlopez.jobconnect.domain.model.vo.UserId;
+import com.justinlopez.jobconnect.domain.repository.CategoryRepository;
+import com.justinlopez.jobconnect.domain.repository.JobRepository;
+import com.justinlopez.jobconnect.domain.service.JobValidationService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class CreateJobUseCase {
+
+    private final JobRepository jobRepository;
+    private final CategoryRepository categoryRepository;
+    private final JobValidationService jobValidationService;
+
+    @Transactional
+    public JobResponse execute(CreateJobRequest request, UUID clienteId) {
+
+        log.info("Creating job with title: {} for clientId: {}", request.title(), clienteId);
+
+        // 1. Validate business rules to see if the client can create a job
+        if (!jobValidationService.canClientCreateJob(new UserId(clienteId))) {
+            log.warn("Client with id {} is not allowed to create a job", clienteId);
+            throw new IllegalStateException("Client is not allowed to create a job");
+        }
+
+        // 2. Validate that the category exists
+        Category category = this.categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + request.categoryId()));
+
+        // 3. Build value objects and domain model for the new job
+        Money budget = new Money(BigDecimal.valueOf(request.budgetAmount()), request.budgetCurrency());
+        Address location = new Address(request.street(), request.city(), BigDecimal.valueOf(request.latitude()), BigDecimal.valueOf(request.longitude()));
+
+        Job newJob = new Job(
+                null,
+                request.title(),
+                request.description(),
+                category,
+                budget,
+                location,
+                new UserId(clienteId)
+        );
+
+        // 4. Persist the new job
+        Job savedJob = this.jobRepository.save(newJob);
+        log.info("Job created successfully with id: {}", savedJob.getId());
+
+        return mapToJobResponse(savedJob);
+    }
+
+    private JobResponse mapToJobResponse(Job job) {
+        return new JobResponse(
+                job.getId(),
+                job.getTitle(),
+                job.getDescription(),
+                job.getCategory().getName(),
+                job.getBudget().amount().doubleValue(),
+                job.getBudget().currency(),
+                job.getLocation().street(),
+                job.getLocation().city(),
+                job.getLocation().latitude(),
+                job.getLocation().longitude(),
+                job.getClientId().value(),
+                job.getSelectedProfessionalId() != null ? job.getSelectedProfessionalId().value() : null,
+                job.getStatus(),
+                job.getCreatedAt()
+        );
+    }
+
+}

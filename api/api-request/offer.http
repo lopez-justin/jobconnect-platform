@@ -1,0 +1,11 @@
+
+### POST request to create an offer
+POST http://localhost:8080/api/v1/offers
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "jobId": "5d514c81-76aa-4bd5-8712-8ac1eb790cd8",
+  "offeredPrice": 100.00,
+  "message": "Oferta para el trabajo 100"
+}

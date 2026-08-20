@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ public class JwtSecurityUtils {
 
     // ---- Nombres de claims personalizados ----
     public static final String CLAIM_ROLES = "roles";
+    public static final String CLAIM_USER_ID = "user_id";
     private static final String CLAIM_TOKEN_TYPE = "token_type";
 
     private final PrivateKey privateKey;
@@ -103,6 +105,11 @@ public class JwtSecurityUtils {
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.joining(","));
             claims.put(CLAIM_ROLES, authorities);
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUserDetailsService.UserWithId userWithId && userWithId.getUserId() != null) {
+            claims.put(CLAIM_USER_ID, userWithId.getUserId().toString());
         }
 
         Instant now = Instant.now();
@@ -172,6 +179,14 @@ public class JwtSecurityUtils {
 
     public String extractTokenType(String token) {
         return extractClaim(token, claims -> claims.get(CLAIM_TOKEN_TYPE, String.class));
+    }
+
+    public UUID extractUserId(String token) {
+        String userId = extractClaim(token, claims -> claims.get(CLAIM_USER_ID, String.class));
+        if (userId == null || userId.isBlank()) {
+            return null;
+        }
+        return UUID.fromString(userId);
     }
 
     @SuppressWarnings("unchecked")

@@ -20,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -60,40 +61,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String token = authHeader.substring(BEARER_PREFIX.length());
 
-        try {
-            if (!jwtSecurityUtils.isTokenValid(token)) {
-                log.debug("Invalid token or expired, request: {}", request.getRequestURI());
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            // Un refresh token JAMÁS debe usarse para autenticar peticiones normales, solo para el endpoint de /refresh-token.
-            if (!jwtSecurityUtils.isAccessToken(token)) {
-                log.warn("An attempt was made to use a token of a different type than ACCESS in {}", request.getRequestURI());
-                rejectAsUnauthorized(response, "Invalid token type");
-                return;
-            }
-
-            // Evita re-autenticar si ya existe una autenticación en el contexto
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                authenticateRequest(token, request);
-            }
-
+        if (!jwtSecurityUtils.isTokenValid(token)) {
+            log.debug("Invalid token or expired, request: {}", request.getRequestURI());
             filterChain.doFilter(request, response);
-
-        } catch (Exception e) {
-            log.error("Error processing JWT: {}", e.getMessage(), e);
-            rejectAsUnauthorized(response, "It was not possible to validate the credentials");
+            return;
         }
+
+        // Un refresh token JAMÁS debe usarse para autenticar peticiones normales, solo para el endpoint de /refresh-token.
+        if (!jwtSecurityUtils.isAccessToken(token)) {
+            log.warn("An attempt was made to use a token of a different type than ACCESS in {}", request.getRequestURI());
+            rejectAsUnauthorized(response, "Invalid token type");
+            return;
+        }
+
+        // Evita re-autenticar si ya existe una autenticación en el contexto
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            try {
+                authenticateRequest(token, request);
+            } catch (RuntimeException e) {
+                log.error("Error processing JWT: {}", e.getMessage(), e);
+                rejectAsUnauthorized(response, "It was not possible to validate the credentials");
+                return;
+            }
+        }
+
+        filterChain.doFilter(request, response);
 
     }
 
     private void authenticateRequest(String token, HttpServletRequest request) {
         String username = jwtSecurityUtils.extractSubject(token);
         List<SimpleGrantedAuthority> authorities = jwtSecurityUtils.extractAuthorities(token);
+        UUID userId = jwtSecurityUtils.extractUserId(token);
+
+        if (userId == null) {
+            throw new IllegalArgumentException("Missing user_id claim in JWT");
+        }
+
+        CustomUserDetailsService.UserWithId principal =
+                new CustomUserDetailsService.UserWithId(username, "", authorities, userId);
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                username,
+                principal,
                 null,
                 authorities
         );
@@ -103,7 +112,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         context.setAuthentication(authToken);
         SecurityContextHolder.setContext(context);
 
-        log.debug("User {} authenticated with authorities: {}", username, authorities);
+        log.debug("User {} authenticated with authorities: {} and userId: {}", username, authorities, userId);
     }
 
     private void rejectAsUnauthorized(HttpServletResponse response, String message) throws IOException {
