@@ -1,17 +1,24 @@
 package com.justinlopez.jobconnect.infrastructure.web.controller;
 
 import com.justinlopez.jobconnect.application.dto.request.CreateJobRequest;
+import com.justinlopez.jobconnect.application.dto.request.JobListRequest;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
+import com.justinlopez.jobconnect.application.dto.response.JobSummaryResponse;
 import com.justinlopez.jobconnect.application.service.AcceptOfferUseCase;
 import com.justinlopez.jobconnect.application.service.CreateJobUseCase;
+import com.justinlopez.jobconnect.application.service.ListJobsUseCase;
 import com.justinlopez.jobconnect.domain.model.Job;
+import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
+import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
 import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +32,7 @@ public class JobController {
 
     private final CreateJobUseCase createJobUseCase;
     private final AcceptOfferUseCase acceptOfferUseCase;
+    private final ListJobsUseCase listJobsUseCase;
     private final JobRepository jobRepository;
 
     @PostMapping
@@ -38,14 +46,14 @@ public class JobController {
         return ResponseEntity.status(HttpStatus.CREATED).body(jobResponse);
     }
 
-    @GetMapping
+    /*@GetMapping
     public ResponseEntity<List<JobResponse>> getPublishedJobs() {
         List<Job> jobs = this.jobRepository.findPublishedJobs();
         List<JobResponse> response = jobs.stream()
                 .map(this::mapToResponse)
                 .toList();
         return ResponseEntity.ok(response);
-    }
+    }*/
 
     @PostMapping("/{jobId}/offers/{offerId}/accept")
     @PreAuthorize("hasRole('CLIENT')")
@@ -57,6 +65,45 @@ public class JobController {
         UUID clientId = userDetails.getUserId();
         JobResponse response = this.acceptOfferUseCase.execute(jobId, offerId, clientId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<JobSummaryResponse>> listJobs(
+            @RequestParam(required = false) JobStatus status,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Double minBudget,
+            @RequestParam(required = false) Double maxBudget,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal CustomUserDetailsService.UserWithId userDetails
+    ) {
+
+        JobListRequest request = new JobListRequest(
+                status,
+                categoryId,
+                city,
+                minBudget,
+                maxBudget,
+                page,
+                size
+        );
+
+        String role = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(auth -> auth.startsWith("ROLE_"))
+                .findFirst()
+                .orElse("ROLE_CLIENT")
+                .replace("ROLE_", "");
+
+        Page<JobSummaryResponse> jobsPage = this.listJobsUseCase.listJobs(
+                request,
+                new UserId(userDetails.getUserId()),
+                role
+        );
+
+        return ResponseEntity.ok(jobsPage);
     }
 
     private JobResponse mapToResponse(Job job) {

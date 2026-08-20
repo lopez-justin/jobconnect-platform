@@ -9,8 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -43,5 +45,17 @@ public class JpaOfferRepository implements OfferRepository {
         return this.repository.findByProfessionalId(professionalId).stream()
                 .map(this.mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<UUID, Integer> countOffersByJobIds(List<UUID> jobIds) {
+        if (jobIds == null || jobIds.isEmpty()) return Map.of();
+
+        List<Object[]> results = this.repository.countOffersByJobIds(jobIds);
+        return results.stream()
+                .collect(Collectors.toMap(
+                        result -> (UUID) result[0],
+                        result -> ((Long) result[1]).intValue()
+                ));
     }
 }

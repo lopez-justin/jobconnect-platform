@@ -13,6 +13,8 @@ import com.justinlopez.jobconnect.infrastructure.persistence.mapper.OfferMapper;
 import com.justinlopez.jobconnect.infrastructure.persistence.repository.JpaJobRepositoryInterface;
 import com.justinlopez.jobconnect.infrastructure.persistence.repository.JpaOfferRepositoryInterface;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -65,7 +67,7 @@ public class JpaJobRepository implements JobRepository {
                             .map(offerMapper::toDomain)
                             .toList();
 
-                    // 3. Inicializar la lista de ofertas en el agregado (método de dominio)
+                    // 3. Inicializar la lista de ofertas en el agregado
                     job.initializeOffers(offers);
 
                     return job;
@@ -87,5 +89,25 @@ public class JpaJobRepository implements JobRepository {
                 .stream()
                 .map(entity -> findById(entity.getId()).orElseThrow())
                 .toList();
+    }
+
+    @Override
+    public Page<Job> findByFilters(JobStatus status, UUID categoryId, String city, Double minBudget, Double maxBudget, UserId userId, String role, Pageable pageable) {
+        boolean publishedOnly = "PROFESSIONAL".equalsIgnoreCase(role);
+        UUID clientId = "CLIENT".equalsIgnoreCase(role) && userId != null ? userId.value() : null;
+
+        Page<JobEntity> jobEntities = this.repository.findWithFilters(
+                status,
+                categoryId,
+                city,
+                minBudget,
+                maxBudget,
+                clientId,
+                publishedOnly,
+                pageable
+        );
+
+        return jobEntities.map(this.mapper::toDomain);
+
     }
 }
