@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Mapper(
         componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = {CategoryMapper.class, UserMapper.class}
+        uses = {CategoryMapper.class, UserMapper.class, OfferMapper.class}
 )
 public interface JobMapper {
 
@@ -28,8 +28,8 @@ public interface JobMapper {
     @Mapping(target = "longitude", source = "location.longitude")
     @Mapping(target = "client", source = "clientId", qualifiedByName = "userIdToUserEntity")
     @Mapping(target = "category", source = "category")
-    @Mapping(target = "selectedProfessionalId", source = "selectedProfessionalId.value")
     @Mapping(target = "selectedOfferId", ignore = true)
+    @Mapping(target = "selectedProfessionalId", source = "selectedProfessionalId.value")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     JobEntity toEntity(Job job);
@@ -41,9 +41,9 @@ public interface JobMapper {
     @Mapping(target = "clientId", source = "client.id", qualifiedByName = "uuidToUserId")
     @Mapping(target = "selectedProfessionalId", source = "selectedProfessionalId", qualifiedByName = "uuidToUserId")
     @Mapping(target = "category", source = "category")
-    /*@Mapping(target = "offers", ignore = true)
+    @Mapping(target = "offers", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)*/
+    @Mapping(target = "updatedAt", ignore = true)
     Job toDomain(JobEntity jobEntity);
 
 
@@ -64,19 +64,19 @@ public interface JobMapper {
                 jobEntity.getLongitude()
         );
     }
-
+/*
     @Named("userIdToUserEntity")
     default UserEntity userIdToUserEntity(UserId userId) {
         if (userId == null) return null;
         UserEntity entity = new UserEntity();
         entity.setId(userId.value());
         return entity;
-    }
-
+    }*/
+/*
     @Named("uuidToUserId")
     default UserId uuidToUserId(UUID id) {
         if (id == null) return null;
         return new UserId(id);
-    }
+    }*/
 
 }

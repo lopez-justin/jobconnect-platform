@@ -2,6 +2,7 @@ package com.justinlopez.jobconnect.application.service;
 
 import com.justinlopez.jobconnect.application.dto.request.CreateOfferRequest;
 import com.justinlopez.jobconnect.application.dto.response.OfferResponse;
+import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Offer;
 import com.justinlopez.jobconnect.domain.model.vo.Money;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
@@ -53,11 +54,15 @@ public class CreateOfferUseCase {
         job.addOffer(newOffer);
 
         // 5. Persist the job
-        jobRepository.save(job);
-        offerRepository.save(newOffer);
+        Job savedJob = jobRepository.save(job);
+
+        Offer savedOffer = savedJob.getOffers().stream()
+                .filter(offer -> offer.getProfessionalId().value().equals(professionalId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Saved offer not found in job aggregate"));
 
         log.info("Offer created successfully for jobId: {} by professionalId: {}", request.jobId(), professionalId);
-        return mapToResponse(newOffer);
+        return mapToResponse(savedOffer);
 
     }
 

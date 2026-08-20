@@ -18,6 +18,7 @@ public record JobResponse(
         BigDecimal latitude,
         BigDecimal longitude,
         UUID clientId,
+        UUID selectedProfessionalId,
         JobStatus status,
         LocalDateTime createdAt
 ) {

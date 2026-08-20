@@ -26,7 +26,7 @@ public class Job {
     private final UserId clientId;
     private UserId selectedProfessionalId;
     private JobStatus status;
-    private List<Offer> offers;
+    private final List<Offer> offers;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -96,7 +96,7 @@ public class Job {
         this.offers.forEach(o -> {
             if (o.getId().equals(offerId)) {
                 o.accept();
-            } else if (o.getStatus() == OfferStatus.PENDING) {
+            } else {
                 o.reject();
             }
         });
@@ -145,6 +145,17 @@ public class Job {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Initializes the list of offers for the job.
+     * This method clears the existing offers and adds the new ones.
+     *
+     * @param offers The list of offers to initialize.
+     */
+    public void initializeOffers(List<Offer> offers) {
+        this.offers.clear();
+        this.offers.addAll(offers);
+    }
+
     public UUID getId() {
         return id;
     }
@@ -181,6 +192,10 @@ public class Job {
         return status;
     }
 
+    public List<Offer> getOffers() {
+        return offers;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -193,4 +208,7 @@ public class Job {
         this.status = status;
     }
 
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }

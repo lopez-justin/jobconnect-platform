@@ -76,6 +76,7 @@ public class CreateJobUseCase {
                 job.getLocation().latitude(),
                 job.getLocation().longitude(),
                 job.getClientId().value(),
+                job.getSelectedProfessionalId() != null ? job.getSelectedProfessionalId().value() : null,
                 job.getStatus(),
                 job.getCreatedAt()
         );
