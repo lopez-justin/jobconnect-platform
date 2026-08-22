@@ -7,6 +7,8 @@ import com.justinlopez.jobconnect.application.dto.response.JobSummaryResponse;
 import com.justinlopez.jobconnect.application.service.AcceptOfferUseCase;
 import com.justinlopez.jobconnect.application.service.CreateJobUseCase;
 import com.justinlopez.jobconnect.application.service.ListJobsUseCase;
+import com.justinlopez.jobconnect.application.service.MarkJobAsPendingUseCase;
+import com.justinlopez.jobconnect.application.service.ConfirmJobCompletionUseCase;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
@@ -22,7 +24,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -33,6 +34,8 @@ public class JobController {
     private final CreateJobUseCase createJobUseCase;
     private final AcceptOfferUseCase acceptOfferUseCase;
     private final ListJobsUseCase listJobsUseCase;
+    private final MarkJobAsPendingUseCase markJobAsPendingUseCase;
+    private final ConfirmJobCompletionUseCase confirmJobCompletionUseCase;
     private final JobRepository jobRepository;
 
     @PostMapping
@@ -125,4 +128,23 @@ public class JobController {
         );
     }
 
+    @PostMapping("/{jobId}/mark-pending")
+    @PreAuthorize("hasRole('PROFESSIONAL')")
+    public ResponseEntity<JobResponse> markJobAsPending(
+            @PathVariable UUID jobId,
+            @AuthenticationPrincipal CustomUserDetailsService.UserWithId userDetails
+    ) {
+        JobResponse response = this.markJobAsPendingUseCase.execute(jobId, userDetails.getUserId());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{jobId}/confirm-completion")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<JobResponse> confirmCompletion(
+            @PathVariable UUID jobId,
+            @AuthenticationPrincipal CustomUserDetailsService.UserWithId userDetails
+    ) {
+        JobResponse response = confirmJobCompletionUseCase.execute(jobId, userDetails.getUserId());
+        return ResponseEntity.ok(response);
+    }
 }

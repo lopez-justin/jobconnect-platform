@@ -29,8 +29,20 @@ Authorization: Bearer {{token}}
 
 
 ### POST request to accept a offer for a job
-@jobId = 5d514c81-76aa-4bd5-8712-8ac1eb790cd8
-@offerId = 387a9f90-7aa8-45d0-a8e6-5ec7fa549d72
+@jobId = 175dd418-cb60-4c41-8c46-89af89585875
+@offerId = 07dac0e9-c687-46eb-b2da-97a9432245c0
 POST http://localhost:8080/api/v1/jobs/{{jobId}}/offers/{{offerId}}/accept
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### POST request to mark a job as PENDING_CONFIRMATION
+POST http://localhost:8080/api/v1/jobs/{{jobId}}/mark-pending
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### POST request to mark a job as COMPLETED and transaction as RELEASED
+POST http://localhost:8080/api/v1/jobs/{{jobId}}/confirm-completion
 Content-Type: application/json
 Authorization: Bearer {{token}}

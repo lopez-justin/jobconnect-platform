@@ -40,6 +40,14 @@ public class Transaction {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void capture() {
+        if (this.status != TransactionStatus.PENDING) {
+            throw new IllegalStateException("Only PENDING transactions can be captured");
+        }
+        this.status = TransactionStatus.CAPTURED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public UUID getId() {
         return id;
     }
