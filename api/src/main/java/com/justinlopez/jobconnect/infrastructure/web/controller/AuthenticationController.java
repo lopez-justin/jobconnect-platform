@@ -4,6 +4,7 @@ import com.justinlopez.jobconnect.application.dto.request.LoginRequest;
 import com.justinlopez.jobconnect.application.dto.request.RegisterRequest;
 import com.justinlopez.jobconnect.application.dto.response.AuthenticationResponse;
 import com.justinlopez.jobconnect.application.service.AuthenticationService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,10 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
+    @Operation(
+            summary = "Authenticate a user",
+            description = "Allows a user to log in and receive a JWT token for authentication."
+    )
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@Valid @RequestBody LoginRequest request) {
         log.debug("REST request to authenticate an user");
@@ -29,6 +34,10 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Register a new user",
+            description = "Allows a new user to register and receive a JWT token for authentication."
+    )
     @PostMapping("register")
     public ResponseEntity<AuthenticationResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.debug("REST request to register a new user");

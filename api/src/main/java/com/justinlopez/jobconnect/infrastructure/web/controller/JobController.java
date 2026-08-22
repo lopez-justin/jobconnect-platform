@@ -14,6 +14,7 @@ import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
 import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,10 @@ public class JobController {
     private final ConfirmJobCompletionUseCase confirmJobCompletionUseCase;
     private final JobRepository jobRepository;
 
+    @Operation(
+            summary = "Create a new job",
+            description = "Allows an authenticated client to publish a new job."
+    )
     @PostMapping
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<JobResponse> createJob(
@@ -58,6 +63,10 @@ public class JobController {
         return ResponseEntity.ok(response);
     }*/
 
+    @Operation(
+            summary = "Accept a job offer",
+            description = "Allows an authenticated client to accept a job offer."
+    )
     @PostMapping("/{jobId}/offers/{offerId}/accept")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<JobResponse> acceptOffer(
@@ -70,6 +79,10 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "List jobs with optional filters",
+            description = "Allows an authenticated user to list jobs with optional filters such as status, category, city, and budget range."
+    )
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<JobSummaryResponse>> listJobs(
@@ -128,6 +141,10 @@ public class JobController {
         );
     }
 
+    @Operation(
+            summary = "Mark a job as pending",
+            description = "Allows an authenticated professional to mark a job as pending."
+    )
     @PostMapping("/{jobId}/mark-pending")
     @PreAuthorize("hasRole('PROFESSIONAL')")
     public ResponseEntity<JobResponse> markJobAsPending(
@@ -138,6 +155,10 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Confirm job completion",
+            description = "Allows an authenticated client to confirm the completion of a job."
+    )
     @PostMapping("/{jobId}/confirm-completion")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<JobResponse> confirmCompletion(

@@ -4,6 +4,7 @@ import com.justinlopez.jobconnect.application.dto.request.CreateOfferRequest;
 import com.justinlopez.jobconnect.application.dto.response.OfferResponse;
 import com.justinlopez.jobconnect.application.service.CreateOfferUseCase;
 import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,10 @@ public class OfferController {
 
     private final CreateOfferUseCase createOfferUseCase;
 
+    @Operation(
+            summary = "Create a new offer",
+            description = "Allows an authenticated professional to submit a new offer for a job."
+    )
     @PostMapping
     @PreAuthorize("hasRole('PROFESSIONAL')")
     public ResponseEntity<OfferResponse> createOffer(
