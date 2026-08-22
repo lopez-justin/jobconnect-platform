@@ -2,7 +2,10 @@ package com.justinlopez.jobconnect.application.service;
 
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
+import com.justinlopez.jobconnect.domain.model.Offer;
+import com.justinlopez.jobconnect.domain.model.Transaction;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
+import com.justinlopez.jobconnect.domain.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import java.util.UUID;
 public class AcceptOfferUseCase {
 
     private final JobRepository jobRepository;
+    private final TransactionRepository transactionRepository;
 
     @Transactional
     public JobResponse execute(UUID jobId, UUID offerId, UUID clientId) {
@@ -36,10 +40,28 @@ public class AcceptOfferUseCase {
         // and automatically rejects the other offers.
         job.acceptOffer(offerId);
 
+        Offer acceptedOffer = job.getOffers().stream()
+                .filter(offer -> offer.getId().equals(offerId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Accepted offer not found in aggregate"));
+
+        Transaction transaction = new Transaction(
+                null,
+                job.getId(),
+                job.getClientId(),
+                acceptedOffer.getProfessionalId(),
+                acceptedOffer.getOfferedPrice(),
+                null
+        );
+
+        transaction.capture();
+        this.transactionRepository.save(transaction);
+
         Job savedJob = this.jobRepository.save(job); // Persist the changes to the job
 
 
-        log.info("Offer {} accepted successfully for job {}", offerId, jobId);
+        log.info("Offer {} accepted. Transaction {} created with amount {}. Job status: {}",
+                offerId, transaction.getId(), acceptedOffer.getOfferedPrice().amount(), savedJob.getStatus());
 
         return new JobResponse(
                 savedJob.getId(),
