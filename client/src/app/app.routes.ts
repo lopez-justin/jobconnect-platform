@@ -17,21 +17,18 @@ export const routes: Routes = [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
-
   {
-    path: 'dashboard',
-    loadComponent: () =>
-      import('./features/dashboard/dashboard').then((m) => m.DashboardComponent),
+    path: '',
+    loadComponent: () => import('./features/layout/layout').then((m) => m.LayoutComponent),
     canActivate: [authGuard],
+    children: [
+      { path: '', redirectTo: 'jobs', pathMatch: 'full' },
+      {
+        path: 'jobs',
+        loadComponent: () =>
+          import('./features/jobs/job-list/job-list').then((m) => m.JobListComponent),
+      },
+    ],
   },
-
-  /*{
-    path: 'jobs',
-    loadChildren: () => import('./features/jobs/jobs.routes').then((m) => m.JOB_ROUTES),
-    canActivate: [authGuard],
-  },*/
-
-  { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
-
   { path: '**', redirectTo: 'auth/login' },
 ];

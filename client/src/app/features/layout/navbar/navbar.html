@@ -1,0 +1,41 @@
+<nav class="bg-white shadow">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-16 items-center justify-between">
+      <div class="flex items-center gap-8">
+        <a routerLink="/jobs" class="text-xl font-bold text-slate-900">JobConnect</a>
+
+        <div class="hidden items-center gap-6 sm:flex">
+          <a
+            routerLink="/jobs"
+            routerLinkActive="text-slate-900"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="text-sm font-medium text-slate-500 transition hover:text-slate-900"
+          >
+            Trabajos
+          </a>
+
+          @if (isClient) {
+            <a
+              routerLink="/jobs/create"
+              routerLinkActive="text-slate-900"
+              class="text-sm font-medium text-slate-500 transition hover:text-slate-900"
+            >
+              Publicar Trabajo
+            </a>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span class="hidden text-sm text-slate-600 sm:inline">{{ session()?.fullName }}</span>
+        <button
+          type="button"
+          (click)="onLogout()"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
