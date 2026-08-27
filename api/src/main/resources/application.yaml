@@ -12,6 +12,10 @@ spring:
     # baseline-version: 1
     # table: flyway_schema_history
 
+# CORS configuration
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+
 # JWT configuration
 app:
   security:
