@@ -28,6 +28,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/jobs/job-list/job-list').then((m) => m.JobListComponent),
       },
+      {
+        path: 'jobs/create',
+        loadComponent: () =>
+          import('./features/jobs/job-create/job-create').then((m) => m.JobCreateComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'auth/login' },
