@@ -7,6 +7,7 @@ import com.justinlopez.jobconnect.infrastructure.persistence.repository.JpaCateg
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,5 +22,12 @@ public class JpaCategoryRepository implements CategoryRepository {
     public Optional<Category> findById(UUID id) {
         return this.repository.findById(id)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public List<Category> findAll() {
+        return this.repository.findAll().stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
