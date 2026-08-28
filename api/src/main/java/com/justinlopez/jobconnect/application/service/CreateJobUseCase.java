@@ -31,6 +31,7 @@ public class CreateJobUseCase {
     public JobResponse execute(CreateJobRequest request, UUID clienteId) {
 
         log.info("Creating job with title: {} for clientId: {}", request.title(), clienteId);
+        log.info("Request details: {}", request);
 
         // 1. Validate business rules to see if the client can create a job
         if (!jobValidationService.canClientCreateJob(new UserId(clienteId))) {
@@ -43,8 +44,12 @@ public class CreateJobUseCase {
                 .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + request.categoryId()));
 
         // 3. Build value objects and domain model for the new job
-        Money budget = new Money(BigDecimal.valueOf(request.budgetAmount()), request.budgetCurrency());
-        Address location = new Address(request.street(), request.city(), BigDecimal.valueOf(request.latitude()), BigDecimal.valueOf(request.longitude()));
+        String currency = request.budgetCurrency() != null ? request.budgetCurrency() : "USD";
+        Money budget = new Money(BigDecimal.valueOf(request.budgetAmount()), currency);
+
+        BigDecimal latitude = request.latitude() != null ? BigDecimal.valueOf(request.latitude()) : BigDecimal.ZERO;
+        BigDecimal longitude = request.longitude() != null ? BigDecimal.valueOf(request.longitude()) : BigDecimal.ZERO;
+        Address location = new Address(request.street(), request.city(), latitude, longitude);
 
         Job newJob = new Job(
                 null,
