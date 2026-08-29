@@ -1,7 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { JobsService } from '../../../core/services/jobs.service';
+import { OffersService } from '../../../core/services/offers.service';
 import { JobSummaryResponse, Page } from '../../../shared/models/job.model';
+import { CreateOfferRequest } from '../../../shared/models/offer.model';
 
 const STATUS_LABELS: Record<string, string> = {
   PUBLISHED: 'Publicado',
@@ -14,11 +18,14 @@ const STATUS_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-job-list',
-  imports: [],
+  imports: [ReactiveFormsModule],
   templateUrl: './job-list.html',
+  standalone: true,
 })
 export class JobListComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
   private readonly jobsService = inject(JobsService);
+  private readonly offersService = inject(OffersService);
   private readonly authService = inject(AuthService);
 
   readonly jobs = signal<JobSummaryResponse[]>([]);
@@ -29,8 +36,22 @@ export class JobListComponent implements OnInit {
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
 
+  readonly activeOfferJobId = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly offerError = signal('');
+  readonly successMessage = signal('');
+
+  readonly offerForm = this.fb.nonNullable.group({
+    offeredPrice: [0, [Validators.required, Validators.min(0.01)]],
+    message: [''],
+  });
+
   get isClient(): boolean {
     return this.authService.authSession()?.roles?.includes('CLIENT') ?? false;
+  }
+
+  get isProfessional(): boolean {
+    return this.authService.authSession()?.roles?.includes('PROFESSIONAL') ?? false;
   }
 
   get heading(): string {
@@ -70,6 +91,47 @@ export class JobListComponent implements OnInit {
       style: 'currency',
       currency: currency || 'USD',
     }).format(amount);
+  }
+
+  toggleOfferForm(jobId: string): void {
+    this.activeOfferJobId.update((current) => (current === jobId ? null : jobId));
+    this.offerForm.reset({ offeredPrice: 0, message: '' });
+    this.offerError.set('');
+  }
+
+  submitOffer(jobId: string): void {
+    if (this.offerForm.invalid || this.isSubmitting()) {
+      this.offerForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.offerError.set('');
+
+    const message = this.offerForm.controls.message.value.trim();
+    const payload: CreateOfferRequest = {
+      jobId,
+      offeredPrice: this.offerForm.controls.offeredPrice.value,
+      ...(message ? { message } : {}),
+    };
+
+    this.offersService.createOffer(payload).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.successMessage.set('Oferta enviada correctamente.');
+        this.activeOfferJobId.set(null);
+        this.offerForm.reset({ offeredPrice: 0, message: '' });
+        this.loadJobs();
+      },
+      error: (error: HttpErrorResponse) => {
+        const message =
+          typeof error.error?.message === 'string'
+            ? error.error.message
+            : 'No se pudo enviar la oferta. Inténtalo de nuevo.';
+        this.offerError.set(message);
+        this.isSubmitting.set(false);
+      },
+    });
   }
 
   private loadJobs(): void {

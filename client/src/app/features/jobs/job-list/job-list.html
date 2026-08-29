@@ -4,6 +4,12 @@
     <span class="text-sm text-slate-500">{{ totalElements() }} resultado(s)</span>
   </div>
 
+  @if (successMessage()) {
+    <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+      {{ successMessage() }}
+    </div>
+  }
+
   @if (loading()) {
     <div class="py-12 text-center">
       <p class="text-sm text-slate-500">Cargando trabajos...</p>
@@ -50,6 +56,83 @@
             <span>&middot;</span>
             <span>{{ job.offersCount }} oferta(s)</span>
           </div>
+
+          @if (isProfessional && job.status === 'PUBLISHED') {
+            <div class="mt-4 flex justify-end">
+              <button
+                type="button"
+                (click)="toggleOfferForm(job.id)"
+                class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                {{ activeOfferJobId() === job.id ? 'Cancelar' : 'Ofertar' }}
+              </button>
+            </div>
+          }
+
+          @if (activeOfferJobId() === job.id) {
+            <form
+              [formGroup]="offerForm"
+              (ngSubmit)="submitOffer(job.id)"
+              class="mt-4 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+            >
+              @if (offerError()) {
+                <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {{ offerError() }}
+                </div>
+              }
+
+              <div>
+                <label
+                  for="offerPrice-{{ job.id }}"
+                  class="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  Tu presupuesto (USD)
+                </label>
+                <input
+                  id="offerPrice-{{ job.id }}"
+                  type="number"
+                  formControlName="offeredPrice"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Ej: 120"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                />
+                @if (offerForm.controls.offeredPrice.touched && offerForm.controls.offeredPrice.invalid) {
+                  <p class="mt-1 text-xs text-red-600">Ingresa un presupuesto mayor a 0.</p>
+                }
+              </div>
+
+              <div>
+                <label for="offerMessage-{{ job.id }}" class="mb-2 block text-sm font-medium text-slate-700">
+                  Mensaje (opcional)
+                </label>
+                <textarea
+                  id="offerMessage-{{ job.id }}"
+                  formControlName="message"
+                  rows="3"
+                  placeholder="Cuéntale al cliente sobre tu propuesta..."
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                ></textarea>
+              </div>
+
+              <div class="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  (click)="toggleOfferForm(job.id)"
+                  class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="isSubmitting()"
+                  class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
+                >
+                  {{ isSubmitting() ? 'Enviando...' : 'Enviar oferta' }}
+                </button>
+              </div>
+            </form>
+          }
         </div>
       }
     </div>
