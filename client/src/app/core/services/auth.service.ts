@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { catchError, EMPTY, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest, RegisterRequest } from '../../shared/models/auth.model';
 
@@ -39,8 +39,16 @@ export class AuthService {
   }
 
   logout(): void {
+    const refreshToken = this.getRefreshToken();
     this.session.set(null);
     this.clearStoredSession();
+
+    if (refreshToken) {
+      this.http
+        .post<void>(`${this.authApiUrl}/logout`, { refreshToken } satisfies RefreshTokenPayload)
+        .pipe(catchError(() => EMPTY))
+        .subscribe();
+    }
   }
 
   getAccessToken(): string {
