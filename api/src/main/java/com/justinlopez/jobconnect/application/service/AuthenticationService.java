@@ -3,22 +3,29 @@ package com.justinlopez.jobconnect.application.service;
 import com.justinlopez.jobconnect.application.dto.request.LoginRequest;
 import com.justinlopez.jobconnect.application.dto.request.RegisterRequest;
 import com.justinlopez.jobconnect.application.dto.response.AuthenticationResponse;
+import com.justinlopez.jobconnect.domain.model.RefreshToken;
 import com.justinlopez.jobconnect.domain.model.User;
 import com.justinlopez.jobconnect.domain.model.enums.UserRoleName;
 import com.justinlopez.jobconnect.domain.model.vo.Email;
+import com.justinlopez.jobconnect.domain.model.vo.UserId;
+import com.justinlopez.jobconnect.domain.repository.RefreshTokenRepository;
 import com.justinlopez.jobconnect.domain.repository.RoleRepository;
 import com.justinlopez.jobconnect.domain.repository.UserRepository;
+import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
 import com.justinlopez.jobconnect.infrastructure.security.JwtSecurityUtils;
+import com.justinlopez.jobconnect.infrastructure.security.RefreshTokenHasher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Set;
 
 /**
@@ -31,9 +38,11 @@ public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtSecurityUtils jwtSecurityUtils;
+    private final RefreshTokenHasher refreshTokenHasher;
 
     /**
      * Authenticates an existing user and returns access and refresh tokens.
@@ -54,6 +63,10 @@ public class AuthenticationService {
 
             User user = userRepository.findByEmail(request.email())
                     .orElseThrow(() -> new IllegalStateException("User not found after successful authentication"));
+
+            // 3. Persistir el refresh token con rotación (invalidar tokens previos revocados/vencidos)
+            persistRefreshToken(user, refreshToken);
+            cleanupRevokedTokens(user);
 
             return buildAuthenticationResponse(user, accessToken, refreshToken);
         } catch (BadCredentialsException e) {
@@ -110,6 +123,7 @@ public class AuthenticationService {
             // Generar token JWT
             final String accessToken = jwtSecurityUtils.createAccessToken(authentication);
             final String refreshToken = jwtSecurityUtils.createRefreshToken(authentication);
+            persistRefreshToken(savedUser, refreshToken);
 
             return buildAuthenticationResponse(savedUser, accessToken, refreshToken);
         } catch (BadCredentialsException e) {
@@ -129,6 +143,129 @@ public class AuthenticationService {
     private Authentication authenticateUser(String email, String password) {
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password);
         return authenticationManager.authenticate(authToken);
+    }
+
+    /**
+     * Refreshes the access token by validating the provided refresh token,
+     * rotating it (invalidating the old one) and issuing a new pair of tokens.
+     *
+     * @param rawRefreshToken refresh token presented by the client
+     * @return a new authenticated user response with rotated tokens
+     */
+    @Transactional
+    public AuthenticationResponse refresh(String rawRefreshToken) {
+        log.info("Attempting to refresh an access token");
+
+        // 1. Validar firma y expiración del JWT
+        if (!jwtSecurityUtils.isTokenValid(rawRefreshToken)) {
+            throw new IllegalArgumentException("Invalid or expired refresh token");
+        }
+        if (!jwtSecurityUtils.isRefreshToken(rawRefreshToken)) {
+            throw new IllegalArgumentException("Not a refresh token");
+        }
+
+        // 2. Buscar el registro persistido por hash
+        String tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+        RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new IllegalArgumentException("Refresh token has been revoked or is no longer valid"));
+
+        if (storedToken.isRevoked()) {
+            throw new IllegalArgumentException("Refresh token has been revoked");
+        }
+        if (storedToken.isExpired(Instant.now())) {
+            refreshTokenRepository.deleteByTokenHash(tokenHash);
+            throw new IllegalArgumentException("Refresh token has expired");
+        }
+
+        // 3. Cargar el usuario y verificar que siga existiendo y activo
+        String email = jwtSecurityUtils.extractSubject(rawRefreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User no longer exists"));
+        if (!user.isActive()) {
+            throw new IllegalStateException("User account is no longer active");
+        }
+
+        // 4. Rotación: invalidar el token actual
+        storedToken.revoke(Instant.now());
+        refreshTokenRepository.save(storedToken);
+
+        // 5. Emitir nuevos tokens y persistir el nuevo refresh token
+        Authentication authentication = buildAuthentication(user);
+        final String accessToken = jwtSecurityUtils.createAccessToken(authentication);
+        final String refreshToken = jwtSecurityUtils.createRefreshToken(authentication);
+        persistRefreshToken(user, refreshToken);
+
+        log.info("Tokens refreshed successfully for user: {}", user.getEmail().value());
+        return buildAuthenticationResponse(user, accessToken, refreshToken);
+    }
+
+    /**
+     * Revokes the refresh token of the current session to end the session immediately.
+     *
+     * @param rawRefreshToken refresh token to revoke
+     */
+    @Transactional
+    public void logout(String rawRefreshToken) {
+        if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+            log.warn("Logout attempt without a refresh token - nothing to revoke");
+            return;
+        }
+
+        String tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+        refreshTokenRepository.deleteByTokenHash(tokenHash);
+        log.info("Refresh token revoked on logout");
+    }
+
+    /**
+     * Persists a hashed copy of the newly issued refresh token.
+     *
+     * @param user the authenticated user
+     * @param rawRefreshToken the raw refresh token issued
+     */
+    private void persistRefreshToken(User user, String rawRefreshToken) {
+        String tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+        Instant expiresAt = jwtSecurityUtils.extractExpiration(rawRefreshToken).toInstant();
+        RefreshToken refreshToken = new RefreshToken(
+                null,
+                tokenHash,
+                user.getId(),
+                expiresAt,
+                null,
+                Instant.now()
+        );
+        refreshTokenRepository.save(refreshToken);
+    }
+
+    /**
+     * Deletes revoked and expired refresh tokens of the user to avoid table bloat.
+     *
+     * @param user the authenticated user
+     */
+    private void cleanupRevokedTokens(User user) {
+        refreshTokenRepository.findByUserId(new UserId(user.getId()))
+                .stream()
+                .filter(token -> token.isRevoked() || token.isExpired(Instant.now()))
+                .forEach(token -> refreshTokenRepository.deleteByTokenHash(token.getTokenHash()));
+    }
+
+    /**
+     * Builds an Authentication from a freshly loaded domain user so the
+     * generated tokens always contain up-to-date authorities.
+     *
+     * @param user domain user
+     * @return authentication object
+     */
+    private Authentication buildAuthentication(User user) {
+        var authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
+                .toList();
+        CustomUserDetailsService.UserWithId principal = new CustomUserDetailsService.UserWithId(
+                user.getEmail().value(),
+                user.getPasswordHash(),
+                authorities,
+                user.getId()
+        );
+        return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
 
     /**
