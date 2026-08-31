@@ -1,8 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, EMPTY, Observable, tap } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../../shared/models/auth.model';
+import { environment } from '@env/environment';
+import { AuthResponse, LoginRequest, RegisterRequest } from '@shared/models/auth.model';
 
 interface RefreshTokenPayload {
   refreshToken: string;

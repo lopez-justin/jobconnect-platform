@@ -1,19 +1,17 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TransactionsService } from '../../../core/services/transactions.service';
-import { Page } from '../../../shared/models/pagination.model';
-import { TransactionResponse, TransactionStatus } from '../../../shared/models/transaction.model';
-
-const STATUS_LABELS: Record<TransactionStatus, string> = {
-  PENDING: 'Pendiente',
-  CAPTURED: 'Capturado',
-  RELEASED: 'Liberado',
-  REFUNDED: 'Reembolsado',
-  FAILED: 'Fallido',
-};
+import { TransactionsService } from '@core/services/transactions.service';
+import { Page } from '@shared/models/pagination.model';
+import { TransactionResponse, TransactionStatus } from '@shared/models/transaction.model';
+import { TRANSACTION_STATUS_LABELS } from '@shared/constants/status.constants';
+import { CurrencyEsPipe } from '@shared/pipes/currency-es.pipe';
+import { DateEsPipe } from '@shared/pipes/date-es.pipe';
+import { PaginationComponent } from '@shared/components/pagination/pagination';
+import { AlertComponent } from '@shared/components/alert/alert';
 
 @Component({
   selector: 'app-transactions-list',
+  imports: [CurrencyEsPipe, DateEsPipe, PaginationComponent, AlertComponent],
   templateUrl: './transactions-list.html',
   standalone: true,
 })
@@ -33,33 +31,13 @@ export class TransactionsListComponent implements OnInit {
     this.loadTransactions();
   }
 
-  previousPage(): void {
-    if (this.page() > 0) {
-      this.page.update((p) => p - 1);
-      this.loadTransactions();
-    }
+  onPageChange(page: number): void {
+    this.page.set(page);
+    this.loadTransactions();
   }
 
-  nextPage(): void {
-    if (this.page() < this.totalPages() - 1) {
-      this.page.update((p) => p + 1);
-      this.loadTransactions();
-    }
-  }
-
-  statusLabel(status: TransactionStatus): string {
-    return STATUS_LABELS[status] ?? status;
-  }
-
-  formatCurrency(amount: number, currency: string): string {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-AR');
+  statusLabel(status: TransactionStatus): string | TransactionStatus {
+    return TRANSACTION_STATUS_LABELS[status] ?? status;
   }
 
   private loadTransactions(): void {

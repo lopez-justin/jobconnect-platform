@@ -1,14 +1,15 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@env/environment';
 import {
   CreateJobRequest,
   JobListParams,
   JobResponse,
   JobSummaryResponse,
-} from '../../shared/models/job.model';
-import { Page } from '../../shared/models/pagination.model';
+} from '@shared/models/job.model';
+import { Page } from '@shared/models/pagination.model';
+import { buildHttpParams } from '@shared/utils/http.util';
 
 @Injectable({
   providedIn: 'root',
@@ -22,42 +23,24 @@ export class JobsService {
   }
 
   listJobs(params: JobListParams = {}): Observable<Page<JobSummaryResponse>> {
-    let httpParams = new HttpParams();
-
-    if (params.status) {
-      httpParams = httpParams.set('status', params.status);
-    }
-    if (params.categoryId) {
-      httpParams = httpParams.set('categoryId', params.categoryId);
-    }
-    if (params.city) {
-      httpParams = httpParams.set('city', params.city);
-    }
-    if (params.minBudget != null) {
-      httpParams = httpParams.set('minBudget', params.minBudget.toString());
-    }
-    if (params.maxBudget != null) {
-      httpParams = httpParams.set('maxBudget', params.maxBudget.toString());
-    }
-    if (params.page != null) {
-      httpParams = httpParams.set('page', params.page.toString());
-    }
-    if (params.size != null) {
-      httpParams = httpParams.set('size', params.size.toString());
-    }
+    const httpParams = buildHttpParams({
+      status: params.status,
+      categoryId: params.categoryId,
+      city: params.city,
+      minBudget: params.minBudget,
+      maxBudget: params.maxBudget,
+      page: params.page,
+      size: params.size,
+    });
 
     return this.http.get<Page<JobSummaryResponse>>(this.jobsApiUrl, { params: httpParams });
   }
 
   listMyJobs(params: JobListParams = {}): Observable<Page<JobSummaryResponse>> {
-    let httpParams = new HttpParams();
-
-    if (params.page != null) {
-      httpParams = httpParams.set('page', params.page.toString());
-    }
-    if (params.size != null) {
-      httpParams = httpParams.set('size', params.size.toString());
-    }
+    const httpParams = buildHttpParams({
+      page: params.page,
+      size: params.size,
+    });
 
     return this.http.get<Page<JobSummaryResponse>>(`${this.jobsApiUrl}/mine`, {
       params: httpParams,

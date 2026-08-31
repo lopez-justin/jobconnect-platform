@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 const AUTH_EXCLUDED_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
 

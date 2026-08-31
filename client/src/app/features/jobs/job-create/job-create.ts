@@ -3,9 +3,9 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CategoriesService } from '../../../core/services/categories.service';
-import { JobsService } from '../../../core/services/jobs.service';
-import { CategoryResponse } from '../../../shared/models/category.model';
+import { CategoriesService } from '@core/services/categories.service';
+import { JobsService } from '@core/services/jobs.service';
+import { CategoryResponse } from '@shared/models/category.model';
 
 @Component({
   selector: 'app-job-create',

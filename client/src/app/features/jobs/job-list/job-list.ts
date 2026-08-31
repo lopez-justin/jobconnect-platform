@@ -2,32 +2,29 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../../../core/services/auth.service';
-import { JobsService } from '../../../core/services/jobs.service';
-import { OffersService } from '../../../core/services/offers.service';
-import { JobSummaryResponse } from '../../../shared/models/job.model';
-import { Page } from '../../../shared/models/pagination.model';
-import { CreateOfferRequest, OfferResponse } from '../../../shared/models/offer.model';
-
-const STATUS_LABELS: Record<string, string> = {
-  PUBLISHED: 'Publicado',
-  IN_PROGRESS: 'En progreso',
-  PENDING_CONFIRMATION: 'Pendiente de confirmación',
-  COMPLETED: 'Completado',
-  CANCELED: 'Cancelado',
-  HIDDEN: 'Oculto',
-};
-
-const OFFER_STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Pendiente',
-  ACCEPTED: 'Aceptada',
-  REJECTED: 'Rechazada',
-  WITHDRAWN: 'Retirada',
-};
+import { AuthService } from '@core/services/auth.service';
+import { JobsService } from '@core/services/jobs.service';
+import { OffersService } from '@core/services/offers.service';
+import { JobSummaryResponse } from '@shared/models/job.model';
+import { Page } from '@shared/models/pagination.model';
+import { CreateOfferRequest, OfferResponse } from '@shared/models/offer.model';
+import { getErrorMessage } from '@shared/utils/http.util';
+import { JobCardComponent } from '../job-card/job-card';
+import { OfferListComponent } from '../offer-list/offer-list';
+import { PaginationComponent } from '@shared/components/pagination/pagination';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog';
+import { AlertComponent } from '@shared/components/alert/alert';
 
 @Component({
   selector: 'app-job-list',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    JobCardComponent,
+    OfferListComponent,
+    PaginationComponent,
+    ConfirmDialogComponent,
+    AlertComponent,
+  ],
   templateUrl: './job-list.html',
   standalone: true,
 })
@@ -108,51 +105,14 @@ export class JobListComponent implements OnInit {
     this.successMessage.set('');
   }
 
-  previousPage(): void {
-    if (this.page() > 0) {
-      this.page.update((p) => p - 1);
-      this.loadJobs();
-    }
+  onPageChange(page: number): void {
+    this.page.set(page);
+    this.loadJobs();
   }
 
-  nextPage(): void {
-    if (this.page() < this.totalPages() - 1) {
-      this.page.update((p) => p + 1);
-      this.loadJobs();
-    }
-  }
-
-  previousMyJobsPage(): void {
-    if (this.myJobsPage() > 0) {
-      this.myJobsPage.update((p) => p - 1);
-      this.loadMyJobs();
-    }
-  }
-
-  nextMyJobsPage(): void {
-    if (this.myJobsPage() < this.myJobsTotalPages() - 1) {
-      this.myJobsPage.update((p) => p + 1);
-      this.loadMyJobs();
-    }
-  }
-
-  statusLabel(status: string): string {
-    return STATUS_LABELS[status] ?? status;
-  }
-
-  offerStatusLabel(status: string): string {
-    return OFFER_STATUS_LABELS[status] ?? status;
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-AR');
-  }
-
-  formatCurrency(amount: number, currency: string): string {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
+  onMyJobsPageChange(page: number): void {
+    this.myJobsPage.set(page);
+    this.loadMyJobs();
   }
 
   toggleOfferForm(jobId: string): void {
@@ -184,21 +144,17 @@ export class JobListComponent implements OnInit {
       .acceptOffer(jobId, offerId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: () => {
-        this.acceptingOfferId.set(null);
-        this.successMessage.set('Oferta aceptada. El trabajo está en progreso.');
-        this.loadOffers(jobId);
-        this.loadJobs();
-      },
-      error: (error: HttpErrorResponse) => {
-        const message =
-          typeof error.error?.message === 'string'
-            ? error.error.message
-            : 'No se pudo aceptar la oferta. Inténtalo de nuevo.';
-        this.offersError.set(message);
-        this.acceptingOfferId.set(null);
-      },
-    });
+        next: () => {
+          this.acceptingOfferId.set(null);
+          this.successMessage.set('Oferta aceptada. El trabajo está en progreso.');
+          this.loadOffers(jobId);
+          this.loadJobs();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.offersError.set(getErrorMessage(error, 'No se pudo aceptar la oferta. Inténtalo de nuevo.'));
+          this.acceptingOfferId.set(null);
+        },
+      });
   }
 
   markAsCompleted(jobId: string): void {
@@ -213,25 +169,23 @@ export class JobListComponent implements OnInit {
       .markAsPending(jobId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: () => {
-        this.actionInProgress.set(false);
-        this.pendingCompletionJobId.set(null);
-        this.successMessage.set(
-          'Trabajo marcado como completado. Se notificó al cliente para su confirmación.',
-        );
-        this.loadJobs();
-        this.refreshActiveList();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.actionInProgress.set(false);
-        this.pendingCompletionJobId.set(null);
-        const message =
-          typeof error.error?.message === 'string'
-            ? error.error.message
-            : 'No se pudo marcar el trabajo como completado.';
-        this.myJobsError.set(message);
-      },
-    });
+        next: () => {
+          this.actionInProgress.set(false);
+          this.pendingCompletionJobId.set(null);
+          this.successMessage.set(
+            'Trabajo marcado como completado. Se notificó al cliente para su confirmación.',
+          );
+          this.loadJobs();
+          this.refreshActiveList();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.actionInProgress.set(false);
+          this.pendingCompletionJobId.set(null);
+          this.myJobsError.set(
+            getErrorMessage(error, 'No se pudo marcar el trabajo como completado.'),
+          );
+        },
+      });
   }
 
   confirmCompletion(jobId: string): void {
@@ -246,24 +200,22 @@ export class JobListComponent implements OnInit {
       .confirmCompletion(jobId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: () => {
-        this.actionInProgress.set(false);
-        this.confirmCompletionJobId.set(null);
-        this.successMessage.set(
-          'Trabajo confirmado como completado. El pago fue liberado al profesional.',
-        );
-        this.loadJobs();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.actionInProgress.set(false);
-        this.confirmCompletionJobId.set(null);
-        const message =
-          typeof error.error?.message === 'string'
-            ? error.error.message
-            : 'No se pudo confirmar la finalización.';
-        this.offersError.set(message);
-      },
-    });
+        next: () => {
+          this.actionInProgress.set(false);
+          this.confirmCompletionJobId.set(null);
+          this.successMessage.set(
+            'Trabajo confirmado como completado. El pago fue liberado al profesional.',
+          );
+          this.loadJobs();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.actionInProgress.set(false);
+          this.confirmCompletionJobId.set(null);
+          this.offersError.set(
+            getErrorMessage(error, 'No se pudo confirmar la finalización.'),
+          );
+        },
+      });
   }
 
   closePendingCompletionModal(): void {
@@ -294,15 +246,15 @@ export class JobListComponent implements OnInit {
       .listOffersByJob(jobId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: (offers: OfferResponse[]) => {
-        this.offers.set(offers);
-        this.offersLoading.set(false);
-      },
-      error: () => {
-        this.offersError.set('No se pudieron cargar las ofertas. Inténtalo de nuevo.');
-        this.offersLoading.set(false);
-      },
-    });
+        next: (offers: OfferResponse[]) => {
+          this.offers.set(offers);
+          this.offersLoading.set(false);
+        },
+        error: () => {
+          this.offersError.set('No se pudieron cargar las ofertas. Inténtalo de nuevo.');
+          this.offersLoading.set(false);
+        },
+      });
   }
 
   submitOffer(jobId: string): void {
@@ -325,22 +277,20 @@ export class JobListComponent implements OnInit {
       .createOffer(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.successMessage.set('Oferta enviada correctamente.');
-        this.activeOfferJobId.set(null);
-        this.offerForm.reset({ offeredPrice: 0, message: '' });
-        this.loadJobs();
-      },
-      error: (error: HttpErrorResponse) => {
-        const message =
-          typeof error.error?.message === 'string'
-            ? error.error.message
-            : 'No se pudo enviar la oferta. Inténtalo de nuevo.';
-        this.offerError.set(message);
-        this.isSubmitting.set(false);
-      },
-    });
+        next: () => {
+          this.isSubmitting.set(false);
+          this.successMessage.set('Oferta enviada correctamente.');
+          this.activeOfferJobId.set(null);
+          this.offerForm.reset({ offeredPrice: 0, message: '' });
+          this.loadJobs();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.offerError.set(
+            getErrorMessage(error, 'No se pudo enviar la oferta. Inténtalo de nuevo.'),
+          );
+          this.isSubmitting.set(false);
+        },
+      });
   }
 
   private loadJobs(): void {
@@ -351,17 +301,17 @@ export class JobListComponent implements OnInit {
       .listJobs({ page: this.page(), size: this.pageSize })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: (result: Page<JobSummaryResponse>) => {
-        this.jobs.set(result.content);
-        this.totalPages.set(result.totalPages);
-        this.totalElements.set(result.totalElements);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('No se pudieron cargar los trabajos. Inténtalo de nuevo.');
-        this.loading.set(false);
-      },
-    });
+        next: (result: Page<JobSummaryResponse>) => {
+          this.jobs.set(result.content);
+          this.totalPages.set(result.totalPages);
+          this.totalElements.set(result.totalElements);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('No se pudieron cargar los trabajos. Inténtalo de nuevo.');
+          this.loading.set(false);
+        },
+      });
   }
 
   private loadMyJobs(): void {
