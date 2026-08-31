@@ -6,6 +6,8 @@ import com.justinlopez.jobconnect.infrastructure.persistence.entity.TransactionE
 import com.justinlopez.jobconnect.infrastructure.persistence.mapper.TransactionMapper;
 import com.justinlopez.jobconnect.infrastructure.persistence.repository.JpaTransactionRepositoryInterface;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -28,6 +30,18 @@ public class JpaTransactionRepository implements TransactionRepository {
     @Override
     public Optional<Transaction> findByJobId(UUID jobId) {
         return this.jpaTransaction.findByJobId(jobId)
+                .map(this.transactionMapper::toDomain);
+    }
+
+    @Override
+    public Page<Transaction> findByClientId(UUID clientId, Pageable pageable) {
+        return this.jpaTransaction.findByClientId(clientId, pageable)
+                .map(this.transactionMapper::toDomain);
+    }
+
+    @Override
+    public Page<Transaction> findByProfessionalId(UUID professionalId, Pageable pageable) {
+        return this.jpaTransaction.findByProfessionalId(professionalId, pageable)
                 .map(this.transactionMapper::toDomain);
     }
 }

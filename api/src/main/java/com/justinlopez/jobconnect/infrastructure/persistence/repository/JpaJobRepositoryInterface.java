@@ -15,6 +15,8 @@ public interface JpaJobRepositoryInterface extends JpaRepository<JobEntity, UUID
     List<JobEntity> findByClientId(UUID clientId);
     List<JobEntity> findByStatus(JobStatus status);
 
+    List<JobEntity> findAllById(Iterable<UUID> ids);
+
     @Query("""
         SELECT j FROM JobEntity j
         WHERE j.selectedProfessionalId = :professionalId

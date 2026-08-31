@@ -75,6 +75,13 @@ public class JpaJobRepository implements JobRepository {
     }
 
     @Override
+    public List<Job> findByIds(java.util.Collection<UUID> ids) {
+        return this.repository.findAllById(ids).stream()
+                .map(this.mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Job> findByClientId(UserId clientId) {
         return this.repository
                 .findByClientId(clientId.value())

@@ -6,6 +6,7 @@ import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +15,7 @@ public interface JobRepository {
 
     Job save(Job job);
     Optional<Job> findById(UUID id);
+    List<Job> findByIds(Collection<UUID> ids);
     List<Job> findByClientId(UserId clientId);
     List<Job> findPublishedJobs();
 
