@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.request.CreateJobRequest;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
 import com.justinlopez.jobconnect.domain.model.Category;
@@ -26,6 +27,7 @@ public class CreateJobUseCase {
     private final JobRepository jobRepository;
     private final CategoryRepository categoryRepository;
     private final JobValidationService jobValidationService;
+    private final JobResponseAssembler jobResponseAssembler;
 
     @Transactional
     public JobResponse execute(CreateJobRequest request, UUID clienteId) {
@@ -65,26 +67,7 @@ public class CreateJobUseCase {
         Job savedJob = this.jobRepository.save(newJob);
         log.info("Job created successfully with id: {}", savedJob.getId());
 
-        return mapToJobResponse(savedJob);
-    }
-
-    private JobResponse mapToJobResponse(Job job) {
-        return new JobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDescription(),
-                job.getCategory().getName(),
-                job.getBudget().amount().doubleValue(),
-                job.getBudget().currency(),
-                job.getLocation().street(),
-                job.getLocation().city(),
-                job.getLocation().latitude(),
-                job.getLocation().longitude(),
-                job.getClientId().value(),
-                job.getSelectedProfessionalId() != null ? job.getSelectedProfessionalId().value() : null,
-                job.getStatus(),
-                job.getCreatedAt()
-        );
+        return jobResponseAssembler.toResponse(savedJob);
     }
 
 }

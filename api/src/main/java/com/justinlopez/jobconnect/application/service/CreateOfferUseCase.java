@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.OfferResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.request.CreateOfferRequest;
 import com.justinlopez.jobconnect.application.dto.response.OfferResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
@@ -25,6 +26,7 @@ public class CreateOfferUseCase {
     private final JobRepository jobRepository;
     private final OfferRepository offerRepository;
     private final OfferValidationService offerValidationService;
+    private final OfferResponseAssembler offerResponseAssembler;
 
     @Transactional
     public OfferResponse execute(CreateOfferRequest request, UUID professionalId) {
@@ -62,22 +64,8 @@ public class CreateOfferUseCase {
                 .orElseThrow(() -> new IllegalStateException("Saved offer not found in job aggregate"));
 
         log.info("Offer created successfully for jobId: {} by professionalId: {}", request.jobId(), professionalId);
-        return mapToResponse(savedOffer);
+        return offerResponseAssembler.toResponse(savedOffer);
 
-    }
-
-    private OfferResponse mapToResponse(Offer offer) {
-        return new OfferResponse(
-                offer.getId(),
-                offer.getJobId(),
-                offer.getProfessionalId().value(),
-                null,
-                offer.getOfferedPrice().amount().doubleValue(),
-                offer.getOfferedPrice().currency(),
-                offer.getMessage(),
-                offer.getStatus(),
-                offer.getCreatedAt()
-        );
     }
 
 }

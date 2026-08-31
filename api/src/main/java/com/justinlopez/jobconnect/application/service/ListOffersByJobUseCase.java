@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.OfferResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.OfferResponse;
 import com.justinlopez.jobconnect.domain.model.OfferSummary;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
@@ -19,6 +20,7 @@ public class ListOffersByJobUseCase {
 
     private final JobRepository jobRepository;
     private final OfferRepository offerRepository;
+    private final OfferResponseAssembler offerResponseAssembler;
 
     @Transactional(readOnly = true)
     public List<OfferResponse> execute(UUID jobId, UUID clientId) {
@@ -35,22 +37,8 @@ public class ListOffersByJobUseCase {
         List<OfferSummary> offers = this.offerRepository.findOfferSummariesByJobId(jobId);
 
         return offers.stream()
-                .map(this::mapToResponse)
+                .map(offerResponseAssembler::toResponse)
                 .toList();
-    }
-
-    private OfferResponse mapToResponse(OfferSummary offer) {
-        return new OfferResponse(
-                offer.id(),
-                offer.jobId(),
-                offer.professionalId(),
-                offer.professionalFullName(),
-                offer.offeredPrice() != null ? offer.offeredPrice().doubleValue() : null,
-                offer.currency(),
-                offer.message(),
-                offer.status(),
-                offer.createdAt()
-        );
     }
 
 }

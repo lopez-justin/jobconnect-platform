@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.JobSummaryAssembler;
 import com.justinlopez.jobconnect.application.dto.response.JobSummaryResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
@@ -24,6 +25,7 @@ public class ListMyJobsUseCase {
 
     private final JobRepository jobRepository;
     private final OfferRepository offerRepository;
+    private final JobSummaryAssembler jobSummaryAssembler;
 
     @Transactional(readOnly = true)
     public Page<JobSummaryResponse> listMyJobs(UUID professionalId, int page, int size) {
@@ -40,24 +42,10 @@ public class ListMyJobsUseCase {
         Map<UUID, Integer> offersCountMap = this.offerRepository.countOffersByJobIds(jobIds);
 
         List<JobSummaryResponse> responses = jobsPage.getContent().stream()
-                .map(job -> mapToSummary(job, offersCountMap.getOrDefault(job.getId(), 0)))
+                .map(job -> jobSummaryAssembler.toSummary(job, offersCountMap.getOrDefault(job.getId(), 0)))
                 .toList();
 
         return new PageImpl<>(responses, pageable, jobsPage.getTotalElements());
-    }
-
-    private JobSummaryResponse mapToSummary(Job job, int offersCount) {
-        return new JobSummaryResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getCategory().getName(),
-                job.getBudget().amount().doubleValue(),
-                job.getBudget().currency(),
-                job.getLocation().city(),
-                job.getStatus(),
-                offersCount,
-                job.getCreatedAt()
-        );
     }
 
 }

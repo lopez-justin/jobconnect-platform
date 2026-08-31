@@ -12,10 +12,8 @@ import com.justinlopez.jobconnect.application.service.ListMyJobsUseCase;
 import com.justinlopez.jobconnect.application.service.ListOffersByJobUseCase;
 import com.justinlopez.jobconnect.application.service.MarkJobAsPendingUseCase;
 import com.justinlopez.jobconnect.application.service.ConfirmJobCompletionUseCase;
-import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
-import com.justinlopez.jobconnect.domain.repository.JobRepository;
 import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -43,7 +41,6 @@ public class JobController {
     private final ListOffersByJobUseCase listOffersByJobUseCase;
     private final MarkJobAsPendingUseCase markJobAsPendingUseCase;
     private final ConfirmJobCompletionUseCase confirmJobCompletionUseCase;
-    private final JobRepository jobRepository;
 
     @Operation(
             summary = "Create a new job",
@@ -59,15 +56,6 @@ public class JobController {
         JobResponse jobResponse = this.createJobUseCase.execute(request, clientId);
         return ResponseEntity.status(HttpStatus.CREATED).body(jobResponse);
     }
-
-    /*@GetMapping
-    public ResponseEntity<List<JobResponse>> getPublishedJobs() {
-        List<Job> jobs = this.jobRepository.findPublishedJobs();
-        List<JobResponse> response = jobs.stream()
-                .map(this::mapToResponse)
-                .toList();
-        return ResponseEntity.ok(response);
-    }*/
 
     @Operation(
             summary = "Accept a job offer",
@@ -160,25 +148,6 @@ public class JobController {
         );
 
         return ResponseEntity.ok(jobsPage);
-    }
-
-    private JobResponse mapToResponse(Job job) {
-        return new JobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDescription(),
-                job.getCategory().getName(),
-                job.getBudget().amount().doubleValue(),
-                job.getBudget().currency(),
-                job.getLocation().street(),
-                job.getLocation().city(),
-                job.getLocation().latitude(),
-                job.getLocation().longitude(),
-                job.getClientId().value(),
-                job.getSelectedProfessionalId() != null ? job.getSelectedProfessionalId().value() : null,
-                job.getStatus(),
-                job.getCreatedAt()
-        );
     }
 
     @Operation(

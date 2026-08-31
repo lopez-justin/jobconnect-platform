@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.infrastructure.security;
 
+import com.justinlopez.jobconnect.application.port.security.TokenHasher;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -12,7 +13,7 @@ import java.util.HexFormat;
  * poder persistirlos en la base de datos sin guardar el token crudo.
  */
 @Component
-public class RefreshTokenHasher {
+public class RefreshTokenHasher implements TokenHasher {
 
     private static final String SHA_256 = "SHA-256";
 

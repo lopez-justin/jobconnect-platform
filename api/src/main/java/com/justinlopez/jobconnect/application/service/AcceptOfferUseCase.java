@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Offer;
@@ -20,6 +21,7 @@ public class AcceptOfferUseCase {
 
     private final JobRepository jobRepository;
     private final TransactionRepository transactionRepository;
+    private final JobResponseAssembler jobResponseAssembler;
 
     @Transactional
     public JobResponse execute(UUID jobId, UUID offerId, UUID clientId) {
@@ -63,22 +65,7 @@ public class AcceptOfferUseCase {
         log.info("Offer {} accepted. Transaction {} created with amount {}. Job status: {}",
                 offerId, transaction.getId(), acceptedOffer.getOfferedPrice().amount(), savedJob.getStatus());
 
-        return new JobResponse(
-                savedJob.getId(),
-                savedJob.getTitle(),
-                savedJob.getDescription(),
-                savedJob.getCategory().getName(),
-                savedJob.getBudget().amount().doubleValue(),
-                savedJob.getBudget().currency(),
-                savedJob.getLocation().street(),
-                savedJob.getLocation().city(),
-                savedJob.getLocation().latitude(),
-                savedJob.getLocation().longitude(),
-                savedJob.getClientId().value(),
-                savedJob.getSelectedProfessionalId() != null ? savedJob.getSelectedProfessionalId().value() : null,
-                savedJob.getStatus(),
-                savedJob.getCreatedAt()
-        );
+        return jobResponseAssembler.toResponse(savedJob);
     }
 
 }

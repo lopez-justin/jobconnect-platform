@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class MarkJobAsPendingUseCase {
 
     private final JobRepository jobRepository;
+    private final JobResponseAssembler jobResponseAssembler;
 
     @Transactional
     public JobResponse execute(UUID jobId, UUID professionalId) {
@@ -40,27 +42,8 @@ public class MarkJobAsPendingUseCase {
 
         log.info("Job {} marked as PENDING_CONFIRMATION by professional {}", jobId, professionalId);
 
-        return mapToJobResponse(savedJob);
+        return jobResponseAssembler.toResponse(savedJob);
 
-    }
-
-    private JobResponse mapToJobResponse(Job job) {
-        return new JobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDescription(),
-                job.getCategory().getName(),
-                job.getBudget().amount().doubleValue(),
-                job.getBudget().currency(),
-                job.getLocation().street(),
-                job.getLocation().city(),
-                job.getLocation().latitude(),
-                job.getLocation().longitude(),
-                job.getClientId().value(),
-                job.getSelectedProfessionalId() != null ? job.getSelectedProfessionalId().value() : null,
-                job.getStatus(),
-                job.getCreatedAt()
-        );
     }
 
 }

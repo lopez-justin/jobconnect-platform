@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.TransactionResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.TransactionResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Transaction;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +29,7 @@ public class ListTransactionsUseCase {
 
     private final TransactionRepository transactionRepository;
     private final JobRepository jobRepository;
+    private final TransactionResponseAssembler transactionResponseAssembler;
 
     @Transactional(readOnly = true)
     public Page<TransactionResponse> listTransactions(UUID userId, String role, int page, int size) {
@@ -46,7 +47,7 @@ public class ListTransactionsUseCase {
         Map<UUID, String> jobTitles = loadJobTitles(transactionsPage.getContent());
 
         List<TransactionResponse> responses = transactionsPage.getContent().stream()
-                .map(transaction -> mapToResponse(transaction, jobTitles))
+                .map(transaction -> transactionResponseAssembler.toResponse(transaction, jobTitles.get(transaction.getJobId())))
                 .toList();
 
         return new PageImpl<>(responses, pageable, transactionsPage.getTotalElements());
@@ -63,20 +64,6 @@ public class ListTransactionsUseCase {
 
         return this.jobRepository.findByIds(jobIds).stream()
                 .collect(Collectors.toMap(Job::getId, Job::getTitle, (a, b) -> a));
-    }
-
-    private TransactionResponse mapToResponse(Transaction transaction, Map<UUID, String> jobTitles) {
-        return new TransactionResponse(
-                transaction.getId(),
-                transaction.getJobId(),
-                jobTitles.get(transaction.getJobId()),
-                transaction.getAmount().amount().doubleValue(),
-                transaction.getAmount().currency(),
-                transaction.getStatus(),
-                transaction.getStripePaymentIntentId(),
-                transaction.getCreatedAt(),
-                transaction.getUpdatedAt()
-        );
     }
 
 }

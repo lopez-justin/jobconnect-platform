@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.infrastructure.security;
 
+import com.justinlopez.jobconnect.application.port.security.TokenProvider;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class JwtSecurityUtils {
+public class JwtSecurityUtils implements TokenProvider {
 
     // ---- Valores posibles del claim "type" ----
     private static final String TOKEN_TYPE_ACCESS = "access";

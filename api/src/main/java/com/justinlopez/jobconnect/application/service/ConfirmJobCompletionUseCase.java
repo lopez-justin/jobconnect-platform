@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.application.service;
 
+import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Transaction;
@@ -20,6 +21,7 @@ public class ConfirmJobCompletionUseCase {
 
     private final JobRepository jobRepository;
     private final TransactionRepository transactionRepository;
+    private final JobResponseAssembler jobResponseAssembler;
 
     @Transactional
     public JobResponse execute(UUID jobId, UUID clientId) {
@@ -56,26 +58,7 @@ public class ConfirmJobCompletionUseCase {
 
         log.info("Job {} confirmed as COMPLETED by client {}", jobId, clientId);
 
-        return mapToJobResponse(savedJob);
-    }
-
-    private JobResponse mapToJobResponse(Job job) {
-        return new JobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDescription(),
-                job.getCategory().getName(),
-                job.getBudget().amount().doubleValue(),
-                job.getBudget().currency(),
-                job.getLocation().street(),
-                job.getLocation().city(),
-                job.getLocation().latitude(),
-                job.getLocation().longitude(),
-                job.getClientId().value(),
-                job.getSelectedProfessionalId() != null ? job.getSelectedProfessionalId().value() : null,
-                job.getStatus(),
-                job.getCreatedAt()
-        );
+        return jobResponseAssembler.toResponse(savedJob);
     }
 
 }
