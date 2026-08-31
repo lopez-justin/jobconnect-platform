@@ -3,12 +3,12 @@ package com.justinlopez.jobconnect.infrastructure.web.controller;
 import com.justinlopez.jobconnect.application.dto.response.TransactionResponse;
 import com.justinlopez.jobconnect.application.service.ListTransactionsUseCase;
 import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
+import com.justinlopez.jobconnect.infrastructure.security.SecurityRoles;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,16 +33,9 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal CustomUserDetailsService.UserWithId userDetails) {
 
-        String role = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(auth -> auth.startsWith("ROLE_"))
-                .findFirst()
-                .orElse("ROLE_CLIENT")
-                .replace("ROLE_", "");
-
         Page<TransactionResponse> response = this.listTransactionsUseCase.listTransactions(
                 userDetails.getUserId(),
-                role,
+                SecurityRoles.requireRole(userDetails.getAuthorities()),
                 page,
                 size
         );

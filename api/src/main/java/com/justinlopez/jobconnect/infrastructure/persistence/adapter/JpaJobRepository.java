@@ -4,6 +4,7 @@ import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Offer;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 import com.justinlopez.jobconnect.domain.model.enums.OfferStatus;
+import com.justinlopez.jobconnect.domain.model.enums.UserRoleName;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
 import com.justinlopez.jobconnect.infrastructure.persistence.entity.JobEntity;
@@ -105,9 +106,9 @@ public class JpaJobRepository implements JobRepository {
     }
 
     @Override
-    public Page<Job> findByFilters(JobStatus status, UUID categoryId, String city, Double minBudget, Double maxBudget, UserId userId, String role, Pageable pageable) {
-        boolean publishedOnly = "PROFESSIONAL".equalsIgnoreCase(role);
-        UUID clientId = "CLIENT".equalsIgnoreCase(role) && userId != null ? userId.value() : null;
+    public Page<Job> findByFilters(JobStatus status, UUID categoryId, String city, Double minBudget, Double maxBudget, UserId userId, UserRoleName role, Pageable pageable) {
+        boolean publishedOnly = role == UserRoleName.PROFESSIONAL;
+        UUID clientId = role == UserRoleName.CLIENT && userId != null ? userId.value() : null;
 
         Page<JobEntity> jobEntities = this.repository.findWithFilters(
                 status,

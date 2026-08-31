@@ -2,6 +2,9 @@ package com.justinlopez.jobconnect.application.service;
 
 import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
+import com.justinlopez.jobconnect.application.exception.ConflictException;
+import com.justinlopez.jobconnect.application.exception.ForbiddenOperationException;
+import com.justinlopez.jobconnect.application.exception.ResourceNotFoundException;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
@@ -25,15 +28,15 @@ public class MarkJobAsPendingUseCase {
         log.info("Professional {} marking job {} as pending confirmation", professionalId, jobId);
 
         Job job = this.jobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
         if (job.getSelectedProfessionalId() == null || !job.getSelectedProfessionalId().value().equals(professionalId)) {
             log.warn("Professional {} is not the assigned professional for job {}", professionalId, jobId);
-            throw new IllegalStateException("You are not the assigned professional for this job");
+            throw new ForbiddenOperationException("You are not the assigned professional for this job");
         }
 
         if (job.getStatus() != JobStatus.IN_PROGRESS) {
-            throw new IllegalStateException("Only jobs IN_PROGRESS can be marked as pending");
+            throw new ConflictException("Only jobs IN_PROGRESS can be marked as pending");
         }
 
         job.markAsPendingConfirmation();

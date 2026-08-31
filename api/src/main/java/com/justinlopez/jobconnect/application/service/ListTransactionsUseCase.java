@@ -4,6 +4,7 @@ import com.justinlopez.jobconnect.application.assembler.TransactionResponseAssem
 import com.justinlopez.jobconnect.application.dto.response.TransactionResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Transaction;
+import com.justinlopez.jobconnect.domain.model.enums.UserRoleName;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
 import com.justinlopez.jobconnect.domain.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,13 +33,13 @@ public class ListTransactionsUseCase {
     private final TransactionResponseAssembler transactionResponseAssembler;
 
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> listTransactions(UUID userId, String role, int page, int size) {
+    public Page<TransactionResponse> listTransactions(UUID userId, UserRoleName role, int page, int size) {
         log.info("Listing transactions for userId: {} role: {}", userId, role);
 
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Transaction> transactionsPage;
-        if ("PROFESSIONAL".equalsIgnoreCase(role)) {
+        if (role == UserRoleName.PROFESSIONAL) {
             transactionsPage = this.transactionRepository.findByProfessionalId(userId, pageable);
         } else {
             transactionsPage = this.transactionRepository.findByClientId(userId, pageable);

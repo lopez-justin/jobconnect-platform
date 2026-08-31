@@ -1,5 +1,6 @@
 package com.justinlopez.jobconnect.infrastructure.security;
 
+import com.justinlopez.jobconnect.application.port.security.TokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtSecurityUtils jwtSecurityUtils;
+    private final TokenProvider tokenProvider;
 
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -62,14 +63,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String token = authHeader.substring(BEARER_PREFIX.length());
 
-        if (!jwtSecurityUtils.isTokenValid(token)) {
+        if (!tokenProvider.isTokenValid(token)) {
             log.debug("Invalid token or expired, request: {}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
 
         // Un refresh token JAMÁS debe usarse para autenticar peticiones normales, solo para el endpoint de /refresh-token.
-        if (!jwtSecurityUtils.isAccessToken(token)) {
+        if (!tokenProvider.isAccessToken(token)) {
             log.warn("An attempt was made to use a token of a different type than ACCESS in {}", request.getRequestURI());
             rejectAsUnauthorized(response, "Invalid token type");
             return;
@@ -91,9 +92,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void authenticateRequest(String token, HttpServletRequest request) {
-        String username = jwtSecurityUtils.extractSubject(token);
-        List<SimpleGrantedAuthority> authorities = jwtSecurityUtils.extractAuthorities(token);
-        UUID userId = jwtSecurityUtils.extractUserId(token);
+        String username = tokenProvider.extractSubject(token);
+        List<SimpleGrantedAuthority> authorities = tokenProvider.extractAuthorities(token);
+        UUID userId = tokenProvider.extractUserId(token);
 
         if (userId == null) {
             throw new IllegalArgumentException("Missing user_id claim in JWT");

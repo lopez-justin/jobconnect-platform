@@ -2,6 +2,9 @@ package com.justinlopez.jobconnect.application.service;
 
 import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
+import com.justinlopez.jobconnect.application.exception.ConflictException;
+import com.justinlopez.jobconnect.application.exception.ForbiddenOperationException;
+import com.justinlopez.jobconnect.application.exception.ResourceNotFoundException;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Transaction;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
@@ -28,15 +31,15 @@ public class ConfirmJobCompletionUseCase {
         log.info("Client {} confirming completion of job {}", clientId, jobId);
 
         Job job = this.jobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
         if (!job.getClientId().value().equals(clientId)) {
             log.warn("Client {} is not the owner of job {}", clientId, jobId);
-            throw new IllegalStateException("You are not the owner of this job");
+            throw new ForbiddenOperationException("You are not the owner of this job");
         }
 
         if (job.getStatus() != JobStatus.PENDING_CONFIRMATION) {
-            throw new IllegalStateException("Only jobs PENDING_CONFIRMATION can be confirmed");
+            throw new ConflictException("Only jobs PENDING_CONFIRMATION can be confirmed");
         }
 
         // Confirm the job completion
@@ -44,7 +47,7 @@ public class ConfirmJobCompletionUseCase {
 
         // Create a transaction for the completed job
         Transaction transaction = this.transactionRepository.findByJobId(jobId)
-                .orElseThrow(() -> new IllegalStateException("Transaction not found for job " + jobId));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found for job " + jobId));
 
         transaction.release();
         this.transactionRepository.save(transaction);

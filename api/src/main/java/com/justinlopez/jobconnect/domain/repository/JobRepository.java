@@ -2,6 +2,7 @@ package com.justinlopez.jobconnect.domain.repository;
 
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
+import com.justinlopez.jobconnect.domain.model.enums.UserRoleName;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,7 @@ public interface JobRepository {
             Double minBudget,
             Double maxBudget,
             UserId userId,
-            String role,
+            UserRoleName role,
             Pageable pageable
     );
 }

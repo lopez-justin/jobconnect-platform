@@ -3,6 +3,8 @@ package com.justinlopez.jobconnect.application.service;
 import com.justinlopez.jobconnect.application.dto.request.LoginRequest;
 import com.justinlopez.jobconnect.application.dto.request.RegisterRequest;
 import com.justinlopez.jobconnect.application.dto.response.AuthenticationResponse;
+import com.justinlopez.jobconnect.application.port.security.TokenHasher;
+import com.justinlopez.jobconnect.application.port.security.TokenProvider;
 import com.justinlopez.jobconnect.domain.model.RefreshToken;
 import com.justinlopez.jobconnect.domain.model.User;
 import com.justinlopez.jobconnect.domain.model.enums.UserRoleName;
@@ -12,8 +14,6 @@ import com.justinlopez.jobconnect.domain.repository.RefreshTokenRepository;
 import com.justinlopez.jobconnect.domain.repository.RoleRepository;
 import com.justinlopez.jobconnect.domain.repository.UserRepository;
 import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
-import com.justinlopez.jobconnect.infrastructure.security.JwtSecurityUtils;
-import com.justinlopez.jobconnect.infrastructure.security.RefreshTokenHasher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -41,8 +41,8 @@ public class AuthenticationService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final JwtSecurityUtils jwtSecurityUtils;
-    private final RefreshTokenHasher refreshTokenHasher;
+    private final TokenProvider tokenProvider;
+    private final TokenHasher tokenHasher;
 
     /**
      * Authenticates an existing user and returns access and refresh tokens.
@@ -58,8 +58,8 @@ public class AuthenticationService {
             Authentication authentication = authenticateUser(request.email(), request.password());
 
             // 2. Generar token JWT
-            final String accessToken = jwtSecurityUtils.createAccessToken(authentication);
-            final String refreshToken = jwtSecurityUtils.createRefreshToken(authentication);
+            final String accessToken = tokenProvider.createAccessToken(authentication);
+            final String refreshToken = tokenProvider.createRefreshToken(authentication);
 
             User user = userRepository.findByEmail(request.email())
                     .orElseThrow(() -> new IllegalStateException("User not found after successful authentication"));
@@ -121,8 +121,8 @@ public class AuthenticationService {
             Authentication authentication = authenticateUser(request.email(), request.password());
 
             // Generar token JWT
-            final String accessToken = jwtSecurityUtils.createAccessToken(authentication);
-            final String refreshToken = jwtSecurityUtils.createRefreshToken(authentication);
+            final String accessToken = tokenProvider.createAccessToken(authentication);
+            final String refreshToken = tokenProvider.createRefreshToken(authentication);
             persistRefreshToken(savedUser, refreshToken);
 
             return buildAuthenticationResponse(savedUser, accessToken, refreshToken);
@@ -157,15 +157,15 @@ public class AuthenticationService {
         log.info("Attempting to refresh an access token");
 
         // 1. Validar firma y expiración del JWT
-        if (!jwtSecurityUtils.isTokenValid(rawRefreshToken)) {
+        if (!tokenProvider.isTokenValid(rawRefreshToken)) {
             throw new IllegalArgumentException("Invalid or expired refresh token");
         }
-        if (!jwtSecurityUtils.isRefreshToken(rawRefreshToken)) {
+        if (!tokenProvider.isRefreshToken(rawRefreshToken)) {
             throw new IllegalArgumentException("Not a refresh token");
         }
 
         // 2. Buscar el registro persistido por hash
-        String tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+        String tokenHash = tokenHasher.hash(rawRefreshToken);
         RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new IllegalArgumentException("Refresh token has been revoked or is no longer valid"));
 
@@ -178,7 +178,7 @@ public class AuthenticationService {
         }
 
         // 3. Cargar el usuario y verificar que siga existiendo y activo
-        String email = jwtSecurityUtils.extractSubject(rawRefreshToken);
+        String email = tokenProvider.extractSubject(rawRefreshToken);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User no longer exists"));
         if (!user.isActive()) {
@@ -191,8 +191,8 @@ public class AuthenticationService {
 
         // 5. Emitir nuevos tokens y persistir el nuevo refresh token
         Authentication authentication = buildAuthentication(user);
-        final String accessToken = jwtSecurityUtils.createAccessToken(authentication);
-        final String refreshToken = jwtSecurityUtils.createRefreshToken(authentication);
+        final String accessToken = tokenProvider.createAccessToken(authentication);
+        final String refreshToken = tokenProvider.createRefreshToken(authentication);
         persistRefreshToken(user, refreshToken);
 
         log.info("Tokens refreshed successfully for user: {}", user.getEmail().value());
@@ -211,7 +211,7 @@ public class AuthenticationService {
             return;
         }
 
-        String tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+        String tokenHash = tokenHasher.hash(rawRefreshToken);
         refreshTokenRepository.deleteByTokenHash(tokenHash);
         log.info("Refresh token revoked on logout");
     }
@@ -223,8 +223,8 @@ public class AuthenticationService {
      * @param rawRefreshToken the raw refresh token issued
      */
     private void persistRefreshToken(User user, String rawRefreshToken) {
-        String tokenHash = refreshTokenHasher.hash(rawRefreshToken);
-        Instant expiresAt = jwtSecurityUtils.extractExpiration(rawRefreshToken).toInstant();
+        String tokenHash = tokenHasher.hash(rawRefreshToken);
+        Instant expiresAt = tokenProvider.extractExpiration(rawRefreshToken).toInstant();
         RefreshToken refreshToken = new RefreshToken(
                 null,
                 tokenHash,

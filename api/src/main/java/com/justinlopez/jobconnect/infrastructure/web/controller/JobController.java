@@ -15,6 +15,7 @@ import com.justinlopez.jobconnect.application.service.ConfirmJobCompletionUseCas
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import com.justinlopez.jobconnect.infrastructure.security.CustomUserDetailsService;
+import com.justinlopez.jobconnect.infrastructure.security.SecurityRoles;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -134,17 +134,10 @@ public class JobController {
                 size
         );
 
-        String role = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(auth -> auth.startsWith("ROLE_"))
-                .findFirst()
-                .orElse("ROLE_CLIENT")
-                .replace("ROLE_", "");
-
         Page<JobSummaryResponse> jobsPage = this.listJobsUseCase.listJobs(
                 request,
                 new UserId(userDetails.getUserId()),
-                role
+                SecurityRoles.requireRole(userDetails.getAuthorities())
         );
 
         return ResponseEntity.ok(jobsPage);

@@ -3,6 +3,8 @@ package com.justinlopez.jobconnect.application.service;
 import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.request.CreateJobRequest;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
+import com.justinlopez.jobconnect.application.exception.ForbiddenOperationException;
+import com.justinlopez.jobconnect.application.exception.ResourceNotFoundException;
 import com.justinlopez.jobconnect.domain.model.Category;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.vo.Address;
@@ -38,12 +40,12 @@ public class CreateJobUseCase {
         // 1. Validate business rules to see if the client can create a job
         if (!jobValidationService.canClientCreateJob(new UserId(clienteId))) {
             log.warn("Client with id {} is not allowed to create a job", clienteId);
-            throw new IllegalStateException("Client is not allowed to create a job");
+            throw new ForbiddenOperationException("Client is not allowed to create a job");
         }
 
         // 2. Validate that the category exists
         Category category = this.categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + request.categoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.categoryId()));
 
         // 3. Build value objects and domain model for the new job
         String currency = request.budgetCurrency() != null ? request.budgetCurrency() : "USD";

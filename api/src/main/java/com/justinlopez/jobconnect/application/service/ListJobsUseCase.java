@@ -4,6 +4,7 @@ import com.justinlopez.jobconnect.application.assembler.JobSummaryAssembler;
 import com.justinlopez.jobconnect.application.dto.request.JobListRequest;
 import com.justinlopez.jobconnect.application.dto.response.JobSummaryResponse;
 import com.justinlopez.jobconnect.domain.model.Job;
+import com.justinlopez.jobconnect.domain.model.enums.UserRoleName;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import com.justinlopez.jobconnect.domain.repository.JobRepository;
 import com.justinlopez.jobconnect.domain.repository.OfferRepository;
@@ -30,7 +31,7 @@ public class ListJobsUseCase {
     private final JobSummaryAssembler jobSummaryAssembler;
 
     @Transactional(readOnly = true)
-    public Page<JobSummaryResponse> listJobs(JobListRequest request, UserId userId, String role) {
+    public Page<JobSummaryResponse> listJobs(JobListRequest request, UserId userId, UserRoleName role) {
         log.info("Listing jobs with filters: {}, user: {}, role: {}", request, userId, role);
 
         Pageable pageable = PageRequest.of(request.page(), request.size());

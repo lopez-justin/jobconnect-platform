@@ -3,6 +3,8 @@ package com.justinlopez.jobconnect.application.service;
 import com.justinlopez.jobconnect.application.assembler.OfferResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.request.CreateOfferRequest;
 import com.justinlopez.jobconnect.application.dto.response.OfferResponse;
+import com.justinlopez.jobconnect.application.exception.ForbiddenOperationException;
+import com.justinlopez.jobconnect.application.exception.ResourceNotFoundException;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Offer;
 import com.justinlopez.jobconnect.domain.model.vo.Money;
@@ -34,12 +36,12 @@ public class CreateOfferUseCase {
 
         // 1. Fetch the job by ID
         var job = jobRepository.findById(request.jobId())
-                .orElseThrow(() -> new IllegalArgumentException("Job not found with ID: " + request.jobId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + request.jobId()));
 
         // 2. Validate business rules
         if (!this.offerValidationService.canProfessionalOffer(new UserId(professionalId))) {
             log.warn("Professional with ID: {} is not allowed to make offers", professionalId);
-            throw new IllegalStateException("Professional is not allowed to make offers at this time");
+            throw new ForbiddenOperationException("Professional is not allowed to make offers at this time");
         }
 
         // 3. Create the offer
@@ -61,7 +63,7 @@ public class CreateOfferUseCase {
         Offer savedOffer = savedJob.getOffers().stream()
                 .filter(offer -> offer.getProfessionalId().value().equals(professionalId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Saved offer not found in job aggregate"));
+                .orElseThrow(() -> new ResourceNotFoundException("Saved offer not found in job aggregate"));
 
         log.info("Offer created successfully for jobId: {} by professionalId: {}", request.jobId(), professionalId);
         return offerResponseAssembler.toResponse(savedOffer);

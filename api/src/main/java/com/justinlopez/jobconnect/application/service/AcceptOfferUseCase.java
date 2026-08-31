@@ -2,6 +2,8 @@ package com.justinlopez.jobconnect.application.service;
 
 import com.justinlopez.jobconnect.application.assembler.JobResponseAssembler;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
+import com.justinlopez.jobconnect.application.exception.ForbiddenOperationException;
+import com.justinlopez.jobconnect.application.exception.ResourceNotFoundException;
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Offer;
 import com.justinlopez.jobconnect.domain.model.Transaction;
@@ -29,12 +31,12 @@ public class AcceptOfferUseCase {
 
         // 2. Retrieve the job associated with the offer
         var job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found for offer: " + jobId));
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found for offer: " + jobId));
 
         // 3. Check if the job belongs to the client
         if (!job.getClientId().value().equals(clientId)) {
             log.warn("Client {} is not the owner of job {}", clientId, job.getId());
-            throw new IllegalStateException("You are not the owner of this job");
+            throw new ForbiddenOperationException("You are not the owner of this job");
         }
 
         // 4. Delegate the acceptance of the offer to the domain model (Job.acceptOffer)
@@ -45,7 +47,7 @@ public class AcceptOfferUseCase {
         Offer acceptedOffer = job.getOffers().stream()
                 .filter(offer -> offer.getId().equals(offerId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Accepted offer not found in aggregate"));
+                .orElseThrow(() -> new ResourceNotFoundException("Accepted offer not found in aggregate"));
 
         Transaction transaction = new Transaction(
                 null,
