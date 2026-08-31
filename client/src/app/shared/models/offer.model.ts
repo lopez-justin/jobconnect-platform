@@ -10,6 +10,7 @@ export interface OfferResponse {
   id: string;
   jobId: string;
   professionalId: string;
+  professionalFullName?: string;
   offeredPrice: number;
   currency: string;
   message: string;

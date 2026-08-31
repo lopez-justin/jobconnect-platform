@@ -5,7 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { JobsService } from '../../../core/services/jobs.service';
 import { OffersService } from '../../../core/services/offers.service';
 import { JobSummaryResponse, Page } from '../../../shared/models/job.model';
-import { CreateOfferRequest } from '../../../shared/models/offer.model';
+import { CreateOfferRequest, OfferResponse } from '../../../shared/models/offer.model';
 
 const STATUS_LABELS: Record<string, string> = {
   PUBLISHED: 'Publicado',
@@ -14,6 +14,13 @@ const STATUS_LABELS: Record<string, string> = {
   COMPLETED: 'Completado',
   CANCELED: 'Cancelado',
   HIDDEN: 'Oculto',
+};
+
+const OFFER_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendiente',
+  ACCEPTED: 'Aceptada',
+  REJECTED: 'Rechazada',
+  WITHDRAWN: 'Retirada',
 };
 
 @Component({
@@ -40,6 +47,12 @@ export class JobListComponent implements OnInit {
   readonly isSubmitting = signal(false);
   readonly offerError = signal('');
   readonly successMessage = signal('');
+
+  readonly activeOffersJobId = signal<string | null>(null);
+  readonly offers = signal<OfferResponse[]>([]);
+  readonly offersLoading = signal(false);
+  readonly offersError = signal('');
+  readonly acceptingOfferId = signal<string | null>(null);
 
   readonly offerForm = this.fb.nonNullable.group({
     offeredPrice: [0, [Validators.required, Validators.min(0.01)]],
@@ -86,6 +99,14 @@ export class JobListComponent implements OnInit {
     return STATUS_LABELS[status] ?? status;
   }
 
+  offerStatusLabel(status: string): string {
+    return OFFER_STATUS_LABELS[status] ?? status;
+  }
+
+  formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-AR');
+  }
+
   formatCurrency(amount: number, currency: string): string {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -97,6 +118,59 @@ export class JobListComponent implements OnInit {
     this.activeOfferJobId.update((current) => (current === jobId ? null : jobId));
     this.offerForm.reset({ offeredPrice: 0, message: '' });
     this.offerError.set('');
+  }
+
+  toggleOffers(jobId: string): void {
+    this.activeOffersJobId.update((current) => (current === jobId ? null : jobId));
+    this.offersError.set('');
+
+    if (this.activeOffersJobId() === jobId) {
+      this.loadOffers(jobId);
+    } else {
+      this.offers.set([]);
+    }
+  }
+
+  acceptOffer(jobId: string, offerId: string): void {
+    if (this.acceptingOfferId()) {
+      return;
+    }
+
+    this.acceptingOfferId.set(offerId);
+    this.successMessage.set('');
+
+    this.jobsService.acceptOffer(jobId, offerId).subscribe({
+      next: () => {
+        this.acceptingOfferId.set(null);
+        this.successMessage.set('Oferta aceptada. El trabajo está en progreso.');
+        this.loadOffers(jobId);
+        this.loadJobs();
+      },
+      error: (error: HttpErrorResponse) => {
+        const message =
+          typeof error.error?.message === 'string'
+            ? error.error.message
+            : 'No se pudo aceptar la oferta. Inténtalo de nuevo.';
+        this.offersError.set(message);
+        this.acceptingOfferId.set(null);
+      },
+    });
+  }
+
+  private loadOffers(jobId: string): void {
+    this.offersLoading.set(true);
+    this.offersError.set('');
+
+    this.offersService.listOffersByJob(jobId).subscribe({
+      next: (offers: OfferResponse[]) => {
+        this.offers.set(offers);
+        this.offersLoading.set(false);
+      },
+      error: () => {
+        this.offersError.set('No se pudieron cargar las ofertas. Inténtalo de nuevo.');
+        this.offersLoading.set(false);
+      },
+    });
   }
 
   submitOffer(jobId: string): void {

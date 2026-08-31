@@ -14,4 +14,8 @@ export class OffersService {
   createOffer(payload: CreateOfferRequest): Observable<OfferResponse> {
     return this.http.post<OfferResponse>(this.offersApiUrl, payload);
   }
+
+  listOffersByJob(jobId: string): Observable<OfferResponse[]> {
+    return this.http.get<OfferResponse[]>(`${environment.apiUrl}/jobs/${jobId}/offers`);
+  }
 }
