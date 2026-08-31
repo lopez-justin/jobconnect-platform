@@ -8,6 +8,7 @@ import com.justinlopez.jobconnect.application.dto.response.OfferResponse;
 import com.justinlopez.jobconnect.application.service.AcceptOfferUseCase;
 import com.justinlopez.jobconnect.application.service.CreateJobUseCase;
 import com.justinlopez.jobconnect.application.service.ListJobsUseCase;
+import com.justinlopez.jobconnect.application.service.ListMyJobsUseCase;
 import com.justinlopez.jobconnect.application.service.ListOffersByJobUseCase;
 import com.justinlopez.jobconnect.application.service.MarkJobAsPendingUseCase;
 import com.justinlopez.jobconnect.application.service.ConfirmJobCompletionUseCase;
@@ -38,6 +39,7 @@ public class JobController {
     private final CreateJobUseCase createJobUseCase;
     private final AcceptOfferUseCase acceptOfferUseCase;
     private final ListJobsUseCase listJobsUseCase;
+    private final ListMyJobsUseCase listMyJobsUseCase;
     private final ListOffersByJobUseCase listOffersByJobUseCase;
     private final MarkJobAsPendingUseCase markJobAsPendingUseCase;
     private final ConfirmJobCompletionUseCase confirmJobCompletionUseCase;
@@ -80,6 +82,25 @@ public class JobController {
 
         UUID clientId = userDetails.getUserId();
         JobResponse response = this.acceptOfferUseCase.execute(jobId, offerId, clientId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "List my assigned jobs",
+            description = "Allows an authenticated professional to list the jobs assigned to them."
+    )
+    @GetMapping("/mine")
+    @PreAuthorize("hasRole('PROFESSIONAL')")
+    public ResponseEntity<Page<JobSummaryResponse>> listMyJobs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal CustomUserDetailsService.UserWithId userDetails) {
+
+        Page<JobSummaryResponse> response = this.listMyJobsUseCase.listMyJobs(
+                userDetails.getUserId(),
+                page,
+                size
+        );
         return ResponseEntity.ok(response);
     }
 

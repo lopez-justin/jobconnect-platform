@@ -17,6 +17,13 @@ public interface JpaJobRepositoryInterface extends JpaRepository<JobEntity, UUID
 
     @Query("""
         SELECT j FROM JobEntity j
+        WHERE j.selectedProfessionalId = :professionalId
+        ORDER BY j.createdAt DESC
+    """)
+    Page<JobEntity> findBySelectedProfessionalId(UUID professionalId, Pageable pageable);
+
+    @Query("""
+        SELECT j FROM JobEntity j
         WHERE (:status IS NULL OR j.status = :status)
         AND (:categoryId IS NULL OR j.category.id = :categoryId)
         AND (:city IS NULL OR j.city = :city)

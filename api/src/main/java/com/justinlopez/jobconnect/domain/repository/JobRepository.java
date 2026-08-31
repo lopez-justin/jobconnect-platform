@@ -17,6 +17,8 @@ public interface JobRepository {
     List<Job> findByClientId(UserId clientId);
     List<Job> findPublishedJobs();
 
+    Page<Job> findBySelectedProfessionalId(UUID professionalId, Pageable pageable);
+
     Page<Job> findByFilters(
             JobStatus status,
             UUID categoryId,

@@ -92,6 +92,12 @@ public class JpaJobRepository implements JobRepository {
     }
 
     @Override
+    public Page<Job> findBySelectedProfessionalId(UUID professionalId, Pageable pageable) {
+        return this.repository.findBySelectedProfessionalId(professionalId, pageable)
+                .map(this.mapper::toDomain);
+    }
+
+    @Override
     public Page<Job> findByFilters(JobStatus status, UUID categoryId, String city, Double minBudget, Double maxBudget, UserId userId, String role, Pageable pageable) {
         boolean publishedOnly = "PROFESSIONAL".equalsIgnoreCase(role);
         UUID clientId = "CLIENT".equalsIgnoreCase(role) && userId != null ? userId.value() : null;
