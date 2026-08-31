@@ -49,6 +49,21 @@ export class JobsService {
     return this.http.get<Page<JobSummaryResponse>>(this.jobsApiUrl, { params: httpParams });
   }
 
+  listMyJobs(params: JobListParams = {}): Observable<Page<JobSummaryResponse>> {
+    let httpParams = new HttpParams();
+
+    if (params.page != null) {
+      httpParams = httpParams.set('page', params.page.toString());
+    }
+    if (params.size != null) {
+      httpParams = httpParams.set('size', params.size.toString());
+    }
+
+    return this.http.get<Page<JobSummaryResponse>>(`${this.jobsApiUrl}/mine`, {
+      params: httpParams,
+    });
+  }
+
   acceptOffer(jobId: string, offerId: string): Observable<JobResponse> {
     return this.http.post<JobResponse>(`${this.jobsApiUrl}/${jobId}/offers/${offerId}/accept`, {});
   }

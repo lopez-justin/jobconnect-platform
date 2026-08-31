@@ -1,8 +1,40 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold text-slate-900">{{ heading }}</h1>
-    <span class="text-sm text-slate-500">{{ totalElements() }} resultado(s)</span>
+
+    @if (isClient) {
+      <span class="text-sm text-slate-500">{{ totalElements() }} resultado(s)</span>
+    }
   </div>
+
+  @if (isProfessional) {
+    <div class="flex gap-1 border-b border-slate-200">
+      <button
+        type="button"
+        (click)="switchTab('available')"
+        class="rounded-t-lg px-4 py-2 text-sm font-medium transition"
+        [class]="
+          activeTab() === 'available'
+            ? 'border-b-2 border-slate-900 text-slate-900'
+            : 'text-slate-500 hover:text-slate-900'
+        "
+      >
+        Trabajos disponibles
+      </button>
+      <button
+        type="button"
+        (click)="switchTab('myJobs')"
+        class="rounded-t-lg px-4 py-2 text-sm font-medium transition"
+        [class]="
+          activeTab() === 'myJobs'
+            ? 'border-b-2 border-slate-900 text-slate-900'
+            : 'text-slate-500 hover:text-slate-900'
+        "
+      >
+        Mis trabajos
+      </button>
+    </div>
+  }
 
   @if (successMessage()) {
     <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -10,230 +42,469 @@
     </div>
   }
 
-  @if (loading()) {
-    <div class="py-12 text-center">
-      <p class="text-sm text-slate-500">Cargando trabajos...</p>
-    </div>
-  } @else if (error()) {
-    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-      {{ error() }}
-    </div>
-  } @else if (jobs().length === 0) {
-    <div class="rounded-xl bg-white px-6 py-12 text-center shadow-sm">
-      <p class="text-sm text-slate-500">{{ emptyMessage }}</p>
-    </div>
-  } @else {
-    <div class="space-y-4">
-      @for (job of jobs(); track job.id) {
-        <div
-          class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
-        >
-          <div class="flex items-start justify-between">
-            <div class="space-y-1">
-              <h2 class="text-lg font-semibold text-slate-900">{{ job.title }}</h2>
-              <p class="text-sm text-slate-500">{{ job.categoryName }} &middot; {{ job.city }}</p>
-            </div>
-            <span
-              class="rounded-full px-2.5 py-0.5 text-xs font-medium"
-              [class]="
-                job.status === 'PUBLISHED'
-                  ? 'bg-green-50 text-green-700'
-                  : job.status === 'IN_PROGRESS'
-                    ? 'bg-blue-50 text-blue-700'
-                    : job.status === 'COMPLETED'
-                      ? 'bg-slate-100 text-slate-600'
-                      : 'bg-amber-50 text-amber-700'
-              "
-            >
-              {{ statusLabel(job.status) }}
-            </span>
-          </div>
-
-          <div class="mt-3 flex items-center gap-4 text-sm text-slate-600">
-            <span class="font-medium text-slate-900">
-              {{ formatCurrency(job.budgetAmount, job.budgetCurrency) }}
-            </span>
-            <span>&middot;</span>
-            <span>{{ job.offersCount }} oferta(s)</span>
-          </div>
-
-          @if (isClient) {
-            <div class="mt-4 flex justify-end">
-              <button
-                type="button"
-                (click)="toggleOffers(job.id)"
-                class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                {{ activeOffersJobId() === job.id ? 'Ocultar ofertas' : 'Ver ofertas' }}
-              </button>
-            </div>
-          }
-
-          @if (activeOffersJobId() === job.id) {
-            <div class="mt-4 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
-              @if (offersLoading()) {
-                <p class="text-sm text-slate-500">Cargando ofertas...</p>
-              } @else if (offersError()) {
-                <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {{ offersError() }}
-                </div>
-              } @else if (offers().length === 0) {
-                <p class="text-sm text-slate-500">Aún no recibiste ofertas para este trabajo.</p>
-              } @else {
-                @for (offer of offers(); track offer.id) {
-                  <div class="rounded-lg border border-slate-200 bg-white p-4">
-                    <div class="flex items-start justify-between gap-4">
-                      <div class="space-y-1">
-                        <p class="text-sm font-semibold text-slate-900">
-                          {{ offer.professionalFullName || 'Profesional' }}
-                        </p>
-                        <p class="text-sm text-slate-500">{{ formatDate(offer.createdAt) }}</p>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <span class="text-sm font-medium text-slate-900">
-                          {{ formatCurrency(offer.offeredPrice, offer.currency) }}
-                        </span>
-                        <span
-                          class="rounded-full px-2.5 py-0.5 text-xs font-medium"
-                          [class]="
-                            offer.status === 'PENDING'
-                              ? 'bg-amber-50 text-amber-700'
-                              : offer.status === 'ACCEPTED'
-                                ? 'bg-green-50 text-green-700'
-                                : offer.status === 'REJECTED'
-                                  ? 'bg-red-50 text-red-700'
-                                  : 'bg-slate-100 text-slate-600'
-                          "
-                        >
-                          {{ offerStatusLabel(offer.status) }}
-                        </span>
-                      </div>
-                    </div>
-
-                    @if (offer.message) {
-                      <p class="mt-2 text-sm text-slate-600">{{ offer.message }}</p>
-                    }
-
-                    @if (offer.status === 'PENDING' && job.status === 'PUBLISHED') {
-                      <div class="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          (click)="acceptOffer(job.id, offer.id)"
-                          [disabled]="acceptingOfferId() !== null"
-                          class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
-                        >
-                          {{
-                            acceptingOfferId() === offer.id ? 'Aceptando...' : 'Aceptar oferta'
-                          }}
-                        </button>
-                      </div>
-                    }
-                  </div>
-                }
-              }
-            </div>
-          }
-
-          @if (isProfessional && job.status === 'PUBLISHED') {
-            <div class="mt-4 flex justify-end">
-              <button
-                type="button"
-                (click)="toggleOfferForm(job.id)"
-                class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-              >
-                {{ activeOfferJobId() === job.id ? 'Cancelar' : 'Ofertar' }}
-              </button>
-            </div>
-          }
-
-          @if (activeOfferJobId() === job.id) {
-            <form
-              [formGroup]="offerForm"
-              (ngSubmit)="submitOffer(job.id)"
-              class="mt-4 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
-            >
-              @if (offerError()) {
-                <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {{ offerError() }}
-                </div>
-              }
-
-              <div>
-                <label
-                  for="offerPrice-{{ job.id }}"
-                  class="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  Tu presupuesto (USD)
-                </label>
-                <input
-                  id="offerPrice-{{ job.id }}"
-                  type="number"
-                  formControlName="offeredPrice"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="Ej: 120"
-                  class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                />
-                @if (offerForm.controls.offeredPrice.touched && offerForm.controls.offeredPrice.invalid) {
-                  <p class="mt-1 text-xs text-red-600">Ingresa un presupuesto mayor a 0.</p>
-                }
+  @if (isClient) {
+    @if (loading()) {
+      <div class="py-12 text-center">
+        <p class="text-sm text-slate-500">Cargando trabajos...</p>
+      </div>
+    } @else if (error()) {
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ error() }}
+      </div>
+    } @else if (jobs().length === 0) {
+      <div class="rounded-xl bg-white px-6 py-12 text-center shadow-sm">
+        <p class="text-sm text-slate-500">{{ emptyMessage }}</p>
+      </div>
+    } @else {
+      <div class="space-y-4">
+        @for (job of jobs(); track job.id) {
+          <div
+            class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+          >
+            <div class="flex items-start justify-between">
+              <div class="space-y-1">
+                <h2 class="text-lg font-semibold text-slate-900">{{ job.title }}</h2>
+                <p class="text-sm text-slate-500">{{ job.categoryName }} &middot; {{ job.city }}</p>
               </div>
+              <span
+                class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                [class]="
+                  job.status === 'PUBLISHED'
+                    ? 'bg-green-50 text-green-700'
+                    : job.status === 'IN_PROGRESS'
+                      ? 'bg-blue-50 text-blue-700'
+                      : job.status === 'PENDING_CONFIRMATION'
+                        ? 'bg-amber-50 text-amber-700'
+                        : job.status === 'COMPLETED'
+                          ? 'bg-slate-100 text-slate-600'
+                          : 'bg-amber-50 text-amber-700'
+                "
+              >
+                {{ statusLabel(job.status) }}
+              </span>
+            </div>
 
-              <div>
-                <label for="offerMessage-{{ job.id }}" class="mb-2 block text-sm font-medium text-slate-700">
-                  Mensaje (opcional)
-                </label>
-                <textarea
-                  id="offerMessage-{{ job.id }}"
-                  formControlName="message"
-                  rows="3"
-                  placeholder="Cuéntale al cliente sobre tu propuesta..."
-                  class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                ></textarea>
-              </div>
+            <div class="mt-3 flex items-center gap-4 text-sm text-slate-600">
+              <span class="font-medium text-slate-900">
+                {{ formatCurrency(job.budgetAmount, job.budgetCurrency) }}
+              </span>
+              <span>&middot;</span>
+              <span>{{ job.offersCount }} oferta(s)</span>
+            </div>
 
-              <div class="flex items-center justify-end gap-3">
+            @if (isClient) {
+              <div class="mt-4 flex justify-end gap-3">
                 <button
                   type="button"
-                  (click)="toggleOfferForm(job.id)"
+                  (click)="toggleOffers(job.id)"
                   class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                 >
-                  Cancelar
+                  {{ activeOffersJobId() === job.id ? 'Ocultar ofertas' : 'Ver ofertas' }}
                 </button>
-                <button
-                  type="submit"
-                  [disabled]="isSubmitting()"
-                  class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
-                >
-                  {{ isSubmitting() ? 'Enviando...' : 'Enviar oferta' }}
-                </button>
+
+                @if (job.status === 'PENDING_CONFIRMATION') {
+                  <button
+                    type="button"
+                    (click)="confirmCompletionJobId.set(job.id)"
+                    class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Confirmar finalización
+                  </button>
+                }
               </div>
-            </form>
+            }
+
+            @if (activeOffersJobId() === job.id) {
+              <div class="mt-4 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                @if (offersLoading()) {
+                  <p class="text-sm text-slate-500">Cargando ofertas...</p>
+                } @else if (offersError()) {
+                  <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {{ offersError() }}
+                  </div>
+                } @else if (offers().length === 0) {
+                  <p class="text-sm text-slate-500">Aún no recibiste ofertas para este trabajo.</p>
+                } @else {
+                  @for (offer of offers(); track offer.id) {
+                    <div class="rounded-lg border border-slate-200 bg-white p-4">
+                      <div class="flex items-start justify-between gap-4">
+                        <div class="space-y-1">
+                          <p class="text-sm font-semibold text-slate-900">
+                            {{ offer.professionalFullName || 'Profesional' }}
+                          </p>
+                          <p class="text-sm text-slate-500">{{ formatDate(offer.createdAt) }}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <span class="text-sm font-medium text-slate-900">
+                            {{ formatCurrency(offer.offeredPrice, offer.currency) }}
+                          </span>
+                          <span
+                            class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                            [class]="
+                              offer.status === 'PENDING'
+                                ? 'bg-amber-50 text-amber-700'
+                                : offer.status === 'ACCEPTED'
+                                  ? 'bg-green-50 text-green-700'
+                                  : offer.status === 'REJECTED'
+                                    ? 'bg-red-50 text-red-700'
+                                    : 'bg-slate-100 text-slate-600'
+                            "
+                          >
+                            {{ offerStatusLabel(offer.status) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      @if (offer.message) {
+                        <p class="mt-2 text-sm text-slate-600">{{ offer.message }}</p>
+                      }
+
+                      @if (offer.status === 'PENDING' && job.status === 'PUBLISHED') {
+                        <div class="mt-3 flex justify-end">
+                          <button
+                            type="button"
+                            (click)="acceptOffer(job.id, offer.id)"
+                            [disabled]="acceptingOfferId() !== null"
+                            class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
+                          >
+                            {{
+                              acceptingOfferId() === offer.id ? 'Aceptando...' : 'Aceptar oferta'
+                            }}
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="flex items-center justify-between pt-4">
+        <button
+          type="button"
+          (click)="previousPage()"
+          [disabled]="page() === 0"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+        >
+          Anterior
+        </button>
+
+        <span class="text-sm text-slate-500"> Página {{ page() + 1 }} de {{ totalPages() }} </span>
+
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages() - 1"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+        >
+          Siguiente
+        </button>
+      </div>
+    }
+  }
+
+  @if (isProfessional) {
+    @if (activeTab() === 'available') {
+      @if (loading()) {
+        <div class="py-12 text-center">
+          <p class="text-sm text-slate-500">Cargando trabajos...</p>
+        </div>
+      } @else if (error()) {
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ error() }}
+        </div>
+      } @else if (jobs().length === 0) {
+        <div class="rounded-xl bg-white px-6 py-12 text-center shadow-sm">
+          <p class="text-sm text-slate-500">{{ emptyMessage }}</p>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (job of jobs(); track job.id) {
+            <div
+              class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+            >
+              <div class="flex items-start justify-between">
+                <div class="space-y-1">
+                  <h2 class="text-lg font-semibold text-slate-900">{{ job.title }}</h2>
+                  <p class="text-sm text-slate-500">
+                    {{ job.categoryName }} &middot; {{ job.city }}
+                  </p>
+                </div>
+                <span
+                  class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  [class]="job.status === 'PUBLISHED' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                >
+                  {{ statusLabel(job.status) }}
+                </span>
+              </div>
+
+              <div class="mt-3 flex items-center gap-4 text-sm text-slate-600">
+                <span class="font-medium text-slate-900">
+                  {{ formatCurrency(job.budgetAmount, job.budgetCurrency) }}
+                </span>
+                <span>&middot;</span>
+                <span>{{ job.offersCount }} oferta(s)</span>
+              </div>
+
+              @if (job.status === 'PUBLISHED') {
+                <div class="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    (click)="toggleOfferForm(job.id)"
+                    class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    {{ activeOfferJobId() === job.id ? 'Cancelar' : 'Ofertar' }}
+                  </button>
+                </div>
+              }
+
+              @if (activeOfferJobId() === job.id) {
+                <form
+                  [formGroup]="offerForm"
+                  (ngSubmit)="submitOffer(job.id)"
+                  class="mt-4 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+                >
+                  @if (offerError()) {
+                    <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                      {{ offerError() }}
+                    </div>
+                  }
+
+                  <div>
+                    <label
+                      for="offerPrice-{{ job.id }}"
+                      class="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      Tu presupuesto (USD)
+                    </label>
+                    <input
+                      id="offerPrice-{{ job.id }}"
+                      type="number"
+                      formControlName="offeredPrice"
+                      min="0.01"
+                      step="0.01"
+                      placeholder="Ej: 120"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    />
+                    @if (offerForm.controls.offeredPrice.touched && offerForm.controls.offeredPrice.invalid) {
+                      <p class="mt-1 text-xs text-red-600">Ingresa un presupuesto mayor a 0.</p>
+                    }
+                  </div>
+
+                  <div>
+                    <label
+                      for="offerMessage-{{ job.id }}"
+                      class="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      Mensaje (opcional)
+                    </label>
+                    <textarea
+                      id="offerMessage-{{ job.id }}"
+                      formControlName="message"
+                      rows="3"
+                      placeholder="Cuéntale al cliente sobre tu propuesta..."
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    ></textarea>
+                  </div>
+
+                  <div class="flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      (click)="toggleOfferForm(job.id)"
+                      class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      [disabled]="isSubmitting()"
+                      class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
+                    >
+                      {{ isSubmitting() ? 'Enviando...' : 'Enviar oferta' }}
+                    </button>
+                  </div>
+                </form>
+              }
+            </div>
           }
         </div>
+
+        <div class="flex items-center justify-between pt-4">
+          <button
+            type="button"
+            (click)="previousPage()"
+            [disabled]="page() === 0"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            Anterior
+          </button>
+
+          <span class="text-sm text-slate-500">
+            Página {{ page() + 1 }} de {{ totalPages() }}
+          </span>
+
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="page() >= totalPages() - 1"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            Siguiente
+          </button>
+        </div>
       }
-    </div>
+    }
 
-    <div class="flex items-center justify-between pt-4">
-      <button
-        type="button"
-        (click)="previousPage()"
-        [disabled]="page() === 0"
-        class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-      >
-        Anterior
-      </button>
+    @if (activeTab() === 'myJobs') {
+      @if (myJobsLoading()) {
+        <div class="py-12 text-center">
+          <p class="text-sm text-slate-500">Cargando tus trabajos...</p>
+        </div>
+      } @else if (myJobsError()) {
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ myJobsError() }}
+        </div>
+      } @else if (myJobs().length === 0) {
+        <div class="rounded-xl bg-white px-6 py-12 text-center shadow-sm">
+          <p class="text-sm text-slate-500">{{ emptyMessage }}</p>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (job of myJobs(); track job.id) {
+            <div
+              class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+            >
+              <div class="flex items-start justify-between">
+                <div class="space-y-1">
+                  <h2 class="text-lg font-semibold text-slate-900">{{ job.title }}</h2>
+                  <p class="text-sm text-slate-500">
+                    {{ job.categoryName }} &middot; {{ job.city }}
+                  </p>
+                </div>
+                <span
+                  class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  [class]="
+                    job.status === 'IN_PROGRESS'
+                      ? 'bg-blue-50 text-blue-700'
+                      : job.status === 'PENDING_CONFIRMATION'
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'bg-slate-100 text-slate-600'
+                  "
+                >
+                  {{ statusLabel(job.status) }}
+                </span>
+              </div>
 
-      <span class="text-sm text-slate-500"> Página {{ page() + 1 }} de {{ totalPages() }} </span>
+              <div class="mt-3 flex items-center gap-4 text-sm text-slate-600">
+                <span class="font-medium text-slate-900">
+                  {{ formatCurrency(job.budgetAmount, job.budgetCurrency) }}
+                </span>
+                <span>&middot;</span>
+                <span>{{ job.offersCount }} oferta(s)</span>
+              </div>
 
-      <button
-        type="button"
-        (click)="nextPage()"
-        [disabled]="page() >= totalPages() - 1"
-        class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-      >
-        Siguiente
-      </button>
-    </div>
+              @if (job.status === 'IN_PROGRESS') {
+                <div class="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    (click)="pendingCompletionJobId.set(job.id)"
+                    class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Marcar completado
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="flex items-center justify-between pt-4">
+          <button
+            type="button"
+            (click)="previousMyJobsPage()"
+            [disabled]="myJobsPage() === 0"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            Anterior
+          </button>
+
+          <span class="text-sm text-slate-500">
+            Página {{ myJobsPage() + 1 }} de {{ myJobsTotalPages() }}
+          </span>
+
+          <button
+            type="button"
+            (click)="nextMyJobsPage()"
+            [disabled]="myJobsPage() >= myJobsTotalPages() - 1"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            Siguiente
+          </button>
+        </div>
+      }
+    }
   }
 </div>
+
+@if (pendingCompletionJobId()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <h2 class="text-lg font-semibold text-slate-900">Marcar trabajo como completado</h2>
+      <p class="mt-3 text-sm text-slate-600">
+        ¿Has completado el trabajo? Esta acción notificará al cliente para que confirme la
+        finalización.
+      </p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          (click)="closePendingCompletionModal()"
+          [disabled]="actionInProgress()"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="markAsCompleted(pendingCompletionJobId()!)"
+          [disabled]="actionInProgress()"
+          class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
+        >
+          {{ actionInProgress() ? 'Procesando...' : 'Sí, completado' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (confirmCompletionJobId()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <h2 class="text-lg font-semibold text-slate-900">Confirmar finalización</h2>
+      <p class="mt-3 text-sm text-slate-600">
+        ¿Confirmas que el trabajo se ha completado satisfactoriamente? El pago será liberado al
+        profesional.
+      </p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          (click)="closeConfirmCompletionModal()"
+          [disabled]="actionInProgress()"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirmCompletion(confirmCompletionJobId()!)"
+          [disabled]="actionInProgress()"
+          class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
+        >
+          {{ actionInProgress() ? 'Procesando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

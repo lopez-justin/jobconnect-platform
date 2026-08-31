@@ -43,6 +43,15 @@ export class JobListComponent implements OnInit {
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
 
+  readonly activeTab = signal<'available' | 'myJobs'>('available');
+
+  readonly myJobs = signal<JobSummaryResponse[]>([]);
+  readonly myJobsLoading = signal(false);
+  readonly myJobsError = signal('');
+  readonly myJobsPage = signal(0);
+  readonly myJobsTotalPages = signal(0);
+  readonly myJobsTotalElements = signal(0);
+
   readonly activeOfferJobId = signal<string | null>(null);
   readonly isSubmitting = signal(false);
   readonly offerError = signal('');
@@ -53,6 +62,10 @@ export class JobListComponent implements OnInit {
   readonly offersLoading = signal(false);
   readonly offersError = signal('');
   readonly acceptingOfferId = signal<string | null>(null);
+
+  readonly pendingCompletionJobId = signal<string | null>(null);
+  readonly confirmCompletionJobId = signal<string | null>(null);
+  readonly actionInProgress = signal(false);
 
   readonly offerForm = this.fb.nonNullable.group({
     offeredPrice: [0, [Validators.required, Validators.min(0.01)]],
@@ -68,17 +81,30 @@ export class JobListComponent implements OnInit {
   }
 
   get heading(): string {
-    return this.isClient ? 'Mis trabajos' : 'Trabajos disponibles';
+    return this.isClient ? 'Mis trabajos' : 'Trabajos';
   }
 
   get emptyMessage(): string {
-    return this.isClient
-      ? 'Aún no has publicado ningún trabajo.'
+    if (this.isClient) {
+      return 'Aún no has publicado ningún trabajo.';
+    }
+    return this.activeTab() === 'myJobs'
+      ? 'Todavía no tienes trabajos asignados.'
       : 'No hay trabajos disponibles en este momento.';
   }
 
   ngOnInit(): void {
+    if (this.isProfessional) {
+      this.loadMyJobs();
+    }
     this.loadJobs();
+  }
+
+  switchTab(tab: 'available' | 'myJobs'): void {
+    this.activeTab.set(tab);
+    this.error.set('');
+    this.myJobsError.set('');
+    this.successMessage.set('');
   }
 
   previousPage(): void {
@@ -92,6 +118,20 @@ export class JobListComponent implements OnInit {
     if (this.page() < this.totalPages() - 1) {
       this.page.update((p) => p + 1);
       this.loadJobs();
+    }
+  }
+
+  previousMyJobsPage(): void {
+    if (this.myJobsPage() > 0) {
+      this.myJobsPage.update((p) => p - 1);
+      this.loadMyJobs();
+    }
+  }
+
+  nextMyJobsPage(): void {
+    if (this.myJobsPage() < this.myJobsTotalPages() - 1) {
+      this.myJobsPage.update((p) => p + 1);
+      this.loadMyJobs();
     }
   }
 
@@ -155,6 +195,85 @@ export class JobListComponent implements OnInit {
         this.acceptingOfferId.set(null);
       },
     });
+  }
+
+  markAsCompleted(jobId: string): void {
+    if (this.actionInProgress()) {
+      return;
+    }
+
+    this.actionInProgress.set(true);
+    this.successMessage.set('');
+
+    this.jobsService.markAsPending(jobId).subscribe({
+      next: () => {
+        this.actionInProgress.set(false);
+        this.pendingCompletionJobId.set(null);
+        this.successMessage.set(
+          'Trabajo marcado como completado. Se notificó al cliente para su confirmación.',
+        );
+        this.loadJobs();
+        this.refreshActiveList();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.actionInProgress.set(false);
+        this.pendingCompletionJobId.set(null);
+        const message =
+          typeof error.error?.message === 'string'
+            ? error.error.message
+            : 'No se pudo marcar el trabajo como completado.';
+        this.myJobsError.set(message);
+      },
+    });
+  }
+
+  confirmCompletion(jobId: string): void {
+    if (this.actionInProgress()) {
+      return;
+    }
+
+    this.actionInProgress.set(true);
+    this.successMessage.set('');
+
+    this.jobsService.confirmCompletion(jobId).subscribe({
+      next: () => {
+        this.actionInProgress.set(false);
+        this.confirmCompletionJobId.set(null);
+        this.successMessage.set(
+          'Trabajo confirmado como completado. El pago fue liberado al profesional.',
+        );
+        this.loadJobs();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.actionInProgress.set(false);
+        this.confirmCompletionJobId.set(null);
+        const message =
+          typeof error.error?.message === 'string'
+            ? error.error.message
+            : 'No se pudo confirmar la finalización.';
+        this.offersError.set(message);
+      },
+    });
+  }
+
+  closePendingCompletionModal(): void {
+    if (!this.actionInProgress()) {
+      this.pendingCompletionJobId.set(null);
+    }
+  }
+
+  closeConfirmCompletionModal(): void {
+    if (!this.actionInProgress()) {
+      this.confirmCompletionJobId.set(null);
+    }
+  }
+
+  private refreshActiveList(): void {
+    if (this.isProfessional) {
+      if (this.activeTab() === 'myJobs') {
+        this.loadMyJobs();
+      }
+    }
   }
 
   private loadOffers(jobId: string): void {
@@ -224,5 +343,25 @@ export class JobListComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  private loadMyJobs(): void {
+    this.myJobsLoading.set(true);
+    this.myJobsError.set('');
+
+    this.jobsService
+      .listMyJobs({ page: this.myJobsPage(), size: this.pageSize })
+      .subscribe({
+        next: (result: Page<JobSummaryResponse>) => {
+          this.myJobs.set(result.content);
+          this.myJobsTotalPages.set(result.totalPages);
+          this.myJobsTotalElements.set(result.totalElements);
+          this.myJobsLoading.set(false);
+        },
+        error: () => {
+          this.myJobsError.set('No se pudieron cargar tus trabajos. Inténtalo de nuevo.');
+          this.myJobsLoading.set(false);
+        },
+      });
   }
 }
