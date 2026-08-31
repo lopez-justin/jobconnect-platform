@@ -1,6 +1,7 @@
 package com.justinlopez.jobconnect.infrastructure.persistence.repository;
 
 import com.justinlopez.jobconnect.infrastructure.persistence.entity.OfferEntity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,8 +10,14 @@ import java.util.List;
 import java.util.UUID;
 
 public interface JpaOfferRepositoryInterface extends JpaRepository<OfferEntity, UUID> {
-    List<OfferEntity> findByJobId(UUID jobId);
-    List<OfferEntity> findByProfessionalId(UUID professionalId);
+@EntityGraph(attributePaths = {"professional"})
+List<OfferEntity> findByJobId(UUID jobId);
+
+@EntityGraph(attributePaths = {"professional"})
+List<OfferEntity> findByProfessionalId(UUID professionalId);
+
+@EntityGraph(attributePaths = {"job", "professional"})
+List<OfferEntity> findByJobIdIn(List<UUID> jobIds);
     @Query("""
             SELECT new com.justinlopez.jobconnect.infrastructure.persistence.repository.OfferSummaryProjection(
                 o.id, o.job.id, o.professional.id, o.professional.fullName,

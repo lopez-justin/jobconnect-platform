@@ -44,8 +44,8 @@ public class CreateOfferUseCase {
             throw new ForbiddenOperationException("Professional is not allowed to make offers at this time");
         }
 
-        // 3. Create the offer
-        Money offeredPrice = new Money(BigDecimal.valueOf(request.offeredPrice()), "USD"); // Assuming USD for simplicity
+        // 3. Create the offer using the job's budget currency (no fixed currency)
+        Money offeredPrice = new Money(BigDecimal.valueOf(request.offeredPrice()), job.getBudget().currency());
         Offer newOffer = new Offer(
                 null,
                 job.getId(),

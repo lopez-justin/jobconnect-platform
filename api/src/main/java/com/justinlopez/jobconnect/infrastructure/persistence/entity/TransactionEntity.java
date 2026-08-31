@@ -40,9 +40,6 @@ public class TransactionEntity {
     @Column(name = "currency", nullable = false, length = 3)
     private String currency;
 
-    @Column(name = "stripe_payment_intent_id")
-    private String stripePaymentIntentId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TransactionStatus status;

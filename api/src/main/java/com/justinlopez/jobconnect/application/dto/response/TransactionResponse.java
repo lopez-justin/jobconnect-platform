@@ -2,7 +2,7 @@ package com.justinlopez.jobconnect.application.dto.response;
 
 import com.justinlopez.jobconnect.domain.model.enums.TransactionStatus;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record TransactionResponse(
@@ -12,8 +12,7 @@ public record TransactionResponse(
         Double amount,
         String currency,
         TransactionStatus status,
-        String stripePaymentIntentId,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt
 ) {
 }

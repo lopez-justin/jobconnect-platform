@@ -6,7 +6,7 @@ import com.justinlopez.jobconnect.domain.model.vo.Address;
 import com.justinlopez.jobconnect.domain.model.vo.Money;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,8 +27,8 @@ public class Job {
     private UserId selectedProfessionalId;
     private JobStatus status;
     private final List<Offer> offers;
-    private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private final OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
     public Job(UUID id, String title, String description, Category category, Money budget, Address location, UserId clientId) {
         this.id = id;
@@ -40,8 +40,8 @@ public class Job {
         this.clientId = clientId;
         this.status = JobStatus.PUBLISHED;
         this.offers = new ArrayList<>();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     /**
@@ -65,7 +65,7 @@ public class Job {
             throw new IllegalArgumentException("Professional has already made an offer on this job.");
         }
         this.offers.add(offer);
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     /**
@@ -103,7 +103,7 @@ public class Job {
 
         this.selectedProfessionalId = offerToAccept.getProfessionalId();
         this.status = JobStatus.IN_PROGRESS;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     /**
@@ -116,7 +116,7 @@ public class Job {
             throw new IllegalStateException("Only jobs IN_PROGRESS can be marked as pending");
         }
         this.status = JobStatus.PENDING_CONFIRMATION;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     /**
@@ -129,7 +129,7 @@ public class Job {
             throw new IllegalStateException("Only jobs PENDING_CONFIRMATION can be completed");
         }
         this.status = JobStatus.COMPLETED;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     /**
@@ -142,7 +142,7 @@ public class Job {
             throw new IllegalStateException("Cannot cancel a job that is already completed or canceled.");
         }
         this.status = JobStatus.CANCELED;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     /**
@@ -196,7 +196,7 @@ public class Job {
         return offers;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
@@ -208,7 +208,7 @@ public class Job {
         this.status = status;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 }

@@ -2,7 +2,7 @@ package com.justinlopez.jobconnect.application.dto.response;
 
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record JobSummaryResponse(
@@ -15,7 +15,7 @@ public record JobSummaryResponse(
         String city,
         JobStatus status,
         Integer offersCount,
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 
 ) {
 }

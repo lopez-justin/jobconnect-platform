@@ -2,6 +2,7 @@ package com.justinlopez.jobconnect.application.service.impl;
 
 import com.justinlopez.jobconnect.domain.model.Job;
 import com.justinlopez.jobconnect.domain.model.Offer;
+import com.justinlopez.jobconnect.domain.model.enums.OfferStatus;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 import com.justinlopez.jobconnect.domain.repository.OfferRepository;
 import com.justinlopez.jobconnect.domain.service.OfferValidationService;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class OfferValidationServiceImpl implements OfferValidationService {
+
+    private static final int MAX_PENDING_OFFERS = 20;
 
     private final OfferRepository offerRepository;
 
@@ -23,8 +26,10 @@ public class OfferValidationServiceImpl implements OfferValidationService {
 
     @Override
     public boolean canProfessionalOffer(UserId professionalId) {
-        // Rule: A professional cannot have more than 20 pending offers at the same time
-        // Future implementation: count pending offers by professional
-        return true; // Placeholder for actual implementation
+        // Rule: A professional cannot have more than MAX_PENDING_OFFERS pending offers at the same time
+        long pendingOffers = offerRepository.findByProfessionalId(professionalId.value()).stream()
+                .filter(offer -> offer.getStatus() == OfferStatus.PENDING)
+                .count();
+        return pendingOffers < MAX_PENDING_OFFERS;
     }
 }

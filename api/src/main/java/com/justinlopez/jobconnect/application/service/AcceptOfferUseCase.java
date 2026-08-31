@@ -54,8 +54,7 @@ public class AcceptOfferUseCase {
                 job.getId(),
                 job.getClientId(),
                 acceptedOffer.getProfessionalId(),
-                acceptedOffer.getOfferedPrice(),
-                null
+                acceptedOffer.getOfferedPrice()
         );
 
         transaction.capture();

@@ -4,7 +4,7 @@ import com.justinlopez.jobconnect.domain.model.enums.OfferStatus;
 import com.justinlopez.jobconnect.domain.model.vo.Money;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class Offer {
@@ -15,8 +15,8 @@ public class Offer {
     private final Money offeredPrice;
     private final String message;
     private OfferStatus status;
-    private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private final OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
     public Offer(UUID id, UUID jobId, UserId professionalId, Money offeredPrice, String message) {
         this.id = id;
@@ -25,8 +25,8 @@ public class Offer {
         this.offeredPrice = offeredPrice;
         this.message = message;
         this.status = OfferStatus.PENDING;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void accept() {
@@ -34,7 +34,7 @@ public class Offer {
             throw new IllegalStateException("Only pending offers can be accepted.");
         }
         this.status = OfferStatus.ACCEPTED;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void reject() {
@@ -42,7 +42,7 @@ public class Offer {
             throw new IllegalStateException("Only pending offers can be rejected.");
         }
         this.status = OfferStatus.REJECTED;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void withdraw() {
@@ -50,7 +50,7 @@ public class Offer {
             throw new IllegalStateException("Only pending offers can be withdrawn.");
         }
         this.status = OfferStatus.WITHDRAWN;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public UUID getId() {
@@ -77,11 +77,11 @@ public class Offer {
         return message;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 

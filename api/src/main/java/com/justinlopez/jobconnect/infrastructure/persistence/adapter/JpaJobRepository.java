@@ -19,8 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -40,17 +42,16 @@ public class JpaJobRepository implements JobRepository {
                 .findFirst()
                 .ifPresent(acceptedOffer -> entity.setSelectedOfferId(acceptedOffer.getId()));
 
-        JobEntity savedEntity = this.repository.save(entity);
-
         List<OfferEntity> offerEntities = job.getOffers().stream()
                 .map(offer -> {
                     OfferEntity offerEntity = offerMapper.toEntity(offer);
-                    offerEntity.setJob(savedEntity);
+                    offerEntity.setJob(entity);
                     return offerEntity;
                 })
                 .toList();
+        entity.setOffers(offerEntities);
 
-        jpaOfferRepository.saveAll(offerEntities);
+        JobEntity savedEntity = this.repository.save(entity);
 
         return findById(savedEntity.getId())
                 .orElseThrow(() -> new IllegalStateException("Failed to reload saved job"));
@@ -59,50 +60,29 @@ public class JpaJobRepository implements JobRepository {
     @Override
     public Optional<Job> findById(UUID id) {
         return this.repository.findById(id)
-                .map(jobEntity -> {
-                    // 1. Mapear el Job raíz
-                    Job job = mapper.toDomain(jobEntity);
-
-                    // 2. Cargar TODAS las ofertas asociadas a este trabajo
-                    List<Offer> offers = jpaOfferRepository.findByJobId(id).stream()
-                            .map(offerMapper::toDomain)
-                            .toList();
-
-                    // 3. Inicializar la lista de ofertas en el agregado
-                    job.initializeOffers(offers);
-
-                    return job;
-                });
+                .map(entity -> toDomainWithOffers(entity, jpaOfferRepository.findByJobId(id)));
     }
 
     @Override
     public List<Job> findByIds(java.util.Collection<UUID> ids) {
-        return this.repository.findAllById(ids).stream()
-                .map(this.mapper::toDomain)
-                .toList();
+        List<JobEntity> entities = this.repository.findAllById(ids);
+        return toDomainWithOffers(entities);
     }
 
     @Override
     public List<Job> findByClientId(UserId clientId) {
-        return this.repository
-                .findByClientId(clientId.value())
-                .stream()
-                .map(entity -> findById(entity.getId()).orElseThrow())
-                .toList();
+        return toDomainWithOffers(this.repository.findByClientId(clientId.value()));
     }
 
     @Override
     public List<Job> findPublishedJobs() {
-        return this.repository.findByStatus(JobStatus.PUBLISHED)
-                .stream()
-                .map(entity -> findById(entity.getId()).orElseThrow())
-                .toList();
+        return toDomainWithOffers(this.repository.findByStatus(JobStatus.PUBLISHED));
     }
 
     @Override
     public Page<Job> findBySelectedProfessionalId(UUID professionalId, Pageable pageable) {
-        return this.repository.findBySelectedProfessionalId(professionalId, pageable)
-                .map(this.mapper::toDomain);
+        Page<JobEntity> page = this.repository.findBySelectedProfessionalId(professionalId, pageable);
+        return page.map(entity -> toDomainWithOffers(entity, jpaOfferRepository.findByJobId(entity.getId())));
     }
 
     @Override
@@ -121,7 +101,34 @@ public class JpaJobRepository implements JobRepository {
                 pageable
         );
 
-        return jobEntities.map(this.mapper::toDomain);
+        return jobEntities.map(entity -> toDomainWithOffers(entity, jpaOfferRepository.findByJobId(entity.getId())));
+    }
 
+    /**
+     * Maps a list of job entities to domain aggregates, loading ALL offers for the
+     * given jobs in a single batched query (avoids the N+1 select problem).
+     */
+    private List<Job> toDomainWithOffers(List<JobEntity> entities) {
+        if (entities.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> jobIds = entities.stream().map(JobEntity::getId).toList();
+        Map<UUID, List<OfferEntity>> offersByJob = jpaOfferRepository.findByJobIdIn(jobIds).stream()
+                .collect(Collectors.groupingBy(offer -> offer.getJob().getId()));
+
+        return entities.stream()
+                .map(entity -> toDomainWithOffers(
+                        entity,
+                        offersByJob.getOrDefault(entity.getId(), List.of())))
+                .toList();
+    }
+
+    private Job toDomainWithOffers(JobEntity entity, List<OfferEntity> offerEntities) {
+        Job job = mapper.toDomain(entity);
+        List<Offer> offers = offerEntities.stream()
+                .map(offerMapper::toDomain)
+                .toList();
+        job.initializeOffers(offers);
+        return job;
     }
 }

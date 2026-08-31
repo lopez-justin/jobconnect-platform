@@ -15,7 +15,6 @@ public class TransactionResponseAssembler {
                 transaction.getAmount().amount().doubleValue(),
                 transaction.getAmount().currency(),
                 transaction.getStatus(),
-                transaction.getStripePaymentIntentId(),
                 transaction.getCreatedAt(),
                 transaction.getUpdatedAt()
         );

@@ -4,7 +4,7 @@ import com.justinlopez.jobconnect.domain.model.enums.TransactionStatus;
 import com.justinlopez.jobconnect.domain.model.vo.Money;
 import com.justinlopez.jobconnect.domain.model.vo.UserId;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class Transaction {
@@ -14,21 +14,19 @@ public class Transaction {
     private final UserId clientId;
     private final UserId professionalId;
     private final Money amount;
-    private final String stripePaymentIntentId;
     private TransactionStatus status;
-    private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private final OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
-    public Transaction(UUID id, UUID jobId, UserId clientId, UserId professionalId, Money amount, String stripePaymentIntentId) {
+    public Transaction(UUID id, UUID jobId, UserId clientId, UserId professionalId, Money amount) {
         this.id = id;
         this.jobId = jobId;
         this.clientId = clientId;
         this.professionalId = professionalId;
         this.amount = amount;
-        this.stripePaymentIntentId = stripePaymentIntentId;
         this.status = TransactionStatus.PENDING;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
 
@@ -37,7 +35,7 @@ public class Transaction {
             throw new IllegalStateException("Only CAPTURED transactions can be released");
         }
         this.status = TransactionStatus.RELEASED;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public void capture() {
@@ -45,7 +43,7 @@ public class Transaction {
             throw new IllegalStateException("Only PENDING transactions can be captured");
         }
         this.status = TransactionStatus.CAPTURED;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public UUID getId() {
@@ -68,19 +66,15 @@ public class Transaction {
         return amount;
     }
 
-    public String getStripePaymentIntentId() {
-        return stripePaymentIntentId;
-    }
-
     public TransactionStatus getStatus() {
         return status;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 
@@ -88,7 +82,7 @@ public class Transaction {
         this.status = status;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

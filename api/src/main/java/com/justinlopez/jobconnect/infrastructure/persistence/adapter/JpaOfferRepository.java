@@ -10,8 +10,6 @@ import com.justinlopez.jobconnect.infrastructure.persistence.repository.OfferSum
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -68,12 +66,8 @@ public class JpaOfferRepository implements OfferRepository {
                 projection.currency(),
                 projection.message(),
                 projection.status(),
-                OffsetDateTimeToLocalDateTime(projection.createdAt())
+                projection.createdAt()
         );
-    }
-
-    private static LocalDateTime OffsetDateTimeToLocalDateTime(OffsetDateTime offsetDateTime) {
-        return offsetDateTime == null ? null : offsetDateTime.toLocalDateTime();
     }
 
     @Override

@@ -3,7 +3,7 @@ package com.justinlopez.jobconnect.domain.model;
 import com.justinlopez.jobconnect.domain.model.enums.OfferStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record OfferSummary(
@@ -15,6 +15,6 @@ public record OfferSummary(
         String currency,
         String message,
         OfferStatus status,
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
 }

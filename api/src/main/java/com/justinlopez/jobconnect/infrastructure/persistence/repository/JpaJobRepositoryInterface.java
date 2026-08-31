@@ -4,6 +4,7 @@ import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 import com.justinlopez.jobconnect.infrastructure.persistence.entity.JobEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -12,11 +13,16 @@ import java.util.UUID;
 
 public interface JpaJobRepositoryInterface extends JpaRepository<JobEntity, UUID> {
 
+    @EntityGraph(attributePaths = {"category", "client"})
     List<JobEntity> findByClientId(UUID clientId);
+
+    @EntityGraph(attributePaths = {"category", "client"})
     List<JobEntity> findByStatus(JobStatus status);
 
+    @EntityGraph(attributePaths = {"category", "client"})
     List<JobEntity> findAllById(Iterable<UUID> ids);
 
+    @EntityGraph(attributePaths = {"category", "client"})
     @Query("""
         SELECT j FROM JobEntity j
         WHERE j.selectedProfessionalId = :professionalId
@@ -24,6 +30,7 @@ public interface JpaJobRepositoryInterface extends JpaRepository<JobEntity, UUID
     """)
     Page<JobEntity> findBySelectedProfessionalId(UUID professionalId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "client"})
     @Query("""
         SELECT j FROM JobEntity j
         WHERE (:status IS NULL OR j.status = :status)
@@ -44,4 +51,7 @@ public interface JpaJobRepositoryInterface extends JpaRepository<JobEntity, UUID
             boolean publishedOnly,
             Pageable pageable
     );
+
+    @EntityGraph(attributePaths = {"category", "client"})
+    java.util.Optional<JobEntity> findById(UUID id);
 }

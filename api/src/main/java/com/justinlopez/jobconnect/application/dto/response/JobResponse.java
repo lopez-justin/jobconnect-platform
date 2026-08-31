@@ -3,7 +3,7 @@ package com.justinlopez.jobconnect.application.dto.response;
 import com.justinlopez.jobconnect.domain.model.enums.JobStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record JobResponse(
@@ -20,6 +20,6 @@ public record JobResponse(
         UUID clientId,
         UUID selectedProfessionalId,
         JobStatus status,
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
 }

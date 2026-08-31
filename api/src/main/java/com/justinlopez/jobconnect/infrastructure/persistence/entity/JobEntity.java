@@ -11,6 +11,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -66,6 +68,9 @@ public class JobEntity {
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private JobStatus status;
+
+    @OneToMany(mappedBy = "job", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<OfferEntity> offers = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
