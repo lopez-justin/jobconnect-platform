@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+logging:
+  level:
+    com.justinlopez.jobconnect: DEBUG
+
+app:
+  admin:
+    email: admin@test.com
+    password: test-password
