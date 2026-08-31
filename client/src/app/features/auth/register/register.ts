@@ -45,7 +45,7 @@ export class RegisterComponent {
     this.authService.register(payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        void this.router.navigateByUrl('/dashboard');
+        void this.router.navigateByUrl('/jobs');
       },
       error: (error: HttpErrorResponse) => {
         const message =

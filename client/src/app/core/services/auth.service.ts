@@ -70,7 +70,16 @@ export class AuthService {
     }
 
     const storedSession = localStorage.getItem(this.storageKey);
-    return storedSession ? (JSON.parse(storedSession) as AuthResponse) : null;
+    if (!storedSession) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(storedSession) as AuthResponse;
+    } catch {
+      localStorage.removeItem(this.storageKey);
+      return null;
+    }
   }
 
   private storeSession(session: AuthResponse): void {

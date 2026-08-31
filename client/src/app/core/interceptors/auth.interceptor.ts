@@ -42,6 +42,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           next: (session) => {
             isRefreshing = false;
             refreshSubject?.next(session.accessToken);
+            refreshSubject = null;
           },
           error: (refreshError: Error) => {
             isRefreshing = false;
