@@ -1,13 +1,17 @@
 package com.justinlopez.jobconnect.infrastructure.persistence.adapter;
 
 import com.justinlopez.jobconnect.domain.model.Offer;
+import com.justinlopez.jobconnect.domain.model.OfferSummary;
 import com.justinlopez.jobconnect.domain.repository.OfferRepository;
 import com.justinlopez.jobconnect.infrastructure.persistence.entity.OfferEntity;
 import com.justinlopez.jobconnect.infrastructure.persistence.mapper.OfferMapper;
 import com.justinlopez.jobconnect.infrastructure.persistence.repository.JpaOfferRepositoryInterface;
+import com.justinlopez.jobconnect.infrastructure.persistence.repository.OfferSummaryProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +49,31 @@ public class JpaOfferRepository implements OfferRepository {
         return this.repository.findByProfessionalId(professionalId).stream()
                 .map(this.mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<OfferSummary> findOfferSummariesByJobId(UUID jobId) {
+        return this.repository.findOfferSummariesByJobId(jobId).stream()
+                .map(JpaOfferRepository::toSummary)
+                .toList();
+    }
+
+    private static OfferSummary toSummary(OfferSummaryProjection projection) {
+        return new OfferSummary(
+                projection.id(),
+                projection.jobId(),
+                projection.professionalId(),
+                projection.professionalFullName(),
+                projection.offeredPrice(),
+                projection.currency(),
+                projection.message(),
+                projection.status(),
+                OffsetDateTimeToLocalDateTime(projection.createdAt())
+        );
+    }
+
+    private static LocalDateTime OffsetDateTimeToLocalDateTime(OffsetDateTime offsetDateTime) {
+        return offsetDateTime == null ? null : offsetDateTime.toLocalDateTime();
     }
 
     @Override

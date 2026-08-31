@@ -71,6 +71,7 @@ public class CreateOfferUseCase {
                 offer.getId(),
                 offer.getJobId(),
                 offer.getProfessionalId().value(),
+                null,
                 offer.getOfferedPrice().amount().doubleValue(),
                 offer.getOfferedPrice().currency(),
                 offer.getMessage(),

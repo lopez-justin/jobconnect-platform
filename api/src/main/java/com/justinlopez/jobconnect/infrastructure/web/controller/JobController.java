@@ -4,9 +4,11 @@ import com.justinlopez.jobconnect.application.dto.request.CreateJobRequest;
 import com.justinlopez.jobconnect.application.dto.request.JobListRequest;
 import com.justinlopez.jobconnect.application.dto.response.JobResponse;
 import com.justinlopez.jobconnect.application.dto.response.JobSummaryResponse;
+import com.justinlopez.jobconnect.application.dto.response.OfferResponse;
 import com.justinlopez.jobconnect.application.service.AcceptOfferUseCase;
 import com.justinlopez.jobconnect.application.service.CreateJobUseCase;
 import com.justinlopez.jobconnect.application.service.ListJobsUseCase;
+import com.justinlopez.jobconnect.application.service.ListOffersByJobUseCase;
 import com.justinlopez.jobconnect.application.service.MarkJobAsPendingUseCase;
 import com.justinlopez.jobconnect.application.service.ConfirmJobCompletionUseCase;
 import com.justinlopez.jobconnect.domain.model.Job;
@@ -25,6 +27,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -35,6 +38,7 @@ public class JobController {
     private final CreateJobUseCase createJobUseCase;
     private final AcceptOfferUseCase acceptOfferUseCase;
     private final ListJobsUseCase listJobsUseCase;
+    private final ListOffersByJobUseCase listOffersByJobUseCase;
     private final MarkJobAsPendingUseCase markJobAsPendingUseCase;
     private final ConfirmJobCompletionUseCase confirmJobCompletionUseCase;
     private final JobRepository jobRepository;
@@ -76,6 +80,21 @@ public class JobController {
 
         UUID clientId = userDetails.getUserId();
         JobResponse response = this.acceptOfferUseCase.execute(jobId, offerId, clientId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "List offers of a job",
+            description = "Allows an authenticated client to list the offers received for one of their jobs."
+    )
+    @GetMapping("/{jobId}/offers")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<List<OfferResponse>> listOffers(
+            @PathVariable UUID jobId,
+            @AuthenticationPrincipal CustomUserDetailsService.UserWithId userDetails) {
+
+        UUID clientId = userDetails.getUserId();
+        List<OfferResponse> response = this.listOffersByJobUseCase.execute(jobId, clientId);
         return ResponseEntity.ok(response);
     }
 
