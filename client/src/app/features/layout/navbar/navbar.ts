@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
   selector: 'app-navbar',
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './navbar.html',
+  standalone: true,
 })
 export class NavbarComponent {
   private readonly authService = inject(AuthService);
@@ -13,13 +14,11 @@ export class NavbarComponent {
 
   readonly session = this.authService.authSession;
 
-  get isClient(): boolean {
-    return this.session()?.roles?.includes('CLIENT') ?? false;
-  }
+  readonly isClient = computed<boolean>(() => this.session()?.roles?.includes('CLIENT') ?? false);
 
-  get isProfessional(): boolean {
-    return this.session()?.roles?.includes('PROFESSIONAL') ?? false;
-  }
+  readonly isProfessional = computed<boolean>(
+    () => this.session()?.roles?.includes('PROFESSIONAL') ?? false,
+  );
 
   onLogout(): void {
     this.authService.logout();

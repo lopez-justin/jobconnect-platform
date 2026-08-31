@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { JobsService } from '../../../core/services/jobs.service';
 import { OffersService } from '../../../core/services/offers.service';
-import { JobSummaryResponse, Page } from '../../../shared/models/job.model';
+import { JobSummaryResponse } from '../../../shared/models/job.model';
+import { Page } from '../../../shared/models/pagination.model';
 import { CreateOfferRequest, OfferResponse } from '../../../shared/models/offer.model';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -34,6 +36,7 @@ export class JobListComponent implements OnInit {
   private readonly jobsService = inject(JobsService);
   private readonly offersService = inject(OffersService);
   private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly jobs = signal<JobSummaryResponse[]>([]);
   readonly loading = signal(true);
@@ -72,29 +75,27 @@ export class JobListComponent implements OnInit {
     message: [''],
   });
 
-  get isClient(): boolean {
-    return this.authService.authSession()?.roles?.includes('CLIENT') ?? false;
-  }
+  readonly isClient = computed<boolean>(
+    () => this.authService.authSession()?.roles?.includes('CLIENT') ?? false,
+  );
 
-  get isProfessional(): boolean {
-    return this.authService.authSession()?.roles?.includes('PROFESSIONAL') ?? false;
-  }
+  readonly isProfessional = computed<boolean>(
+    () => this.authService.authSession()?.roles?.includes('PROFESSIONAL') ?? false,
+  );
 
-  get heading(): string {
-    return this.isClient ? 'Mis trabajos' : 'Trabajos';
-  }
+  readonly heading = computed<string>(() => (this.isClient() ? 'Mis trabajos' : 'Trabajos'));
 
-  get emptyMessage(): string {
-    if (this.isClient) {
+  readonly emptyMessage = computed<string>(() => {
+    if (this.isClient()) {
       return 'Aún no has publicado ningún trabajo.';
     }
     return this.activeTab() === 'myJobs'
       ? 'Todavía no tienes trabajos asignados.'
       : 'No hay trabajos disponibles en este momento.';
-  }
+  });
 
   ngOnInit(): void {
-    if (this.isProfessional) {
+    if (this.isProfessional()) {
       this.loadMyJobs();
     }
     this.loadJobs();
@@ -179,7 +180,10 @@ export class JobListComponent implements OnInit {
     this.acceptingOfferId.set(offerId);
     this.successMessage.set('');
 
-    this.jobsService.acceptOffer(jobId, offerId).subscribe({
+    this.jobsService
+      .acceptOffer(jobId, offerId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.acceptingOfferId.set(null);
         this.successMessage.set('Oferta aceptada. El trabajo está en progreso.');
@@ -205,7 +209,10 @@ export class JobListComponent implements OnInit {
     this.actionInProgress.set(true);
     this.successMessage.set('');
 
-    this.jobsService.markAsPending(jobId).subscribe({
+    this.jobsService
+      .markAsPending(jobId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.actionInProgress.set(false);
         this.pendingCompletionJobId.set(null);
@@ -235,7 +242,10 @@ export class JobListComponent implements OnInit {
     this.actionInProgress.set(true);
     this.successMessage.set('');
 
-    this.jobsService.confirmCompletion(jobId).subscribe({
+    this.jobsService
+      .confirmCompletion(jobId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.actionInProgress.set(false);
         this.confirmCompletionJobId.set(null);
@@ -269,7 +279,7 @@ export class JobListComponent implements OnInit {
   }
 
   private refreshActiveList(): void {
-    if (this.isProfessional) {
+    if (this.isProfessional()) {
       if (this.activeTab() === 'myJobs') {
         this.loadMyJobs();
       }
@@ -280,7 +290,10 @@ export class JobListComponent implements OnInit {
     this.offersLoading.set(true);
     this.offersError.set('');
 
-    this.offersService.listOffersByJob(jobId).subscribe({
+    this.offersService
+      .listOffersByJob(jobId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (offers: OfferResponse[]) => {
         this.offers.set(offers);
         this.offersLoading.set(false);
@@ -308,7 +321,10 @@ export class JobListComponent implements OnInit {
       ...(message ? { message } : {}),
     };
 
-    this.offersService.createOffer(payload).subscribe({
+    this.offersService
+      .createOffer(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.successMessage.set('Oferta enviada correctamente.');
@@ -331,7 +347,10 @@ export class JobListComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
 
-    this.jobsService.listJobs({ page: this.page(), size: this.pageSize }).subscribe({
+    this.jobsService
+      .listJobs({ page: this.page(), size: this.pageSize })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (result: Page<JobSummaryResponse>) => {
         this.jobs.set(result.content);
         this.totalPages.set(result.totalPages);
@@ -351,6 +370,7 @@ export class JobListComponent implements OnInit {
 
     this.jobsService
       .listMyJobs({ page: this.myJobsPage(), size: this.pageSize })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result: Page<JobSummaryResponse>) => {
           this.myJobs.set(result.content);

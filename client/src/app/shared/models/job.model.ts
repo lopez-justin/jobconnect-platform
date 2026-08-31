@@ -51,15 +51,3 @@ export interface JobListParams {
 
 export type JobStatus =
   'PUBLISHED' | 'IN_PROGRESS' | 'PENDING_CONFIRMATION' | 'COMPLETED' | 'CANCELED' | 'HIDDEN';
-
-export interface Page<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  first: boolean;
-  last: boolean;
-  empty: boolean;
-  numberOfElements: number;
-}

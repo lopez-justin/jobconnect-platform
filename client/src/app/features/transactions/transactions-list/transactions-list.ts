@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionsService } from '../../../core/services/transactions.service';
-import { Page } from '../../../shared/models/job.model';
+import { Page } from '../../../shared/models/pagination.model';
 import { TransactionResponse, TransactionStatus } from '../../../shared/models/transaction.model';
 
 const STATUS_LABELS: Record<TransactionStatus, string> = {
@@ -18,6 +19,7 @@ const STATUS_LABELS: Record<TransactionStatus, string> = {
 })
 export class TransactionsListComponent implements OnInit {
   private readonly transactionsService = inject(TransactionsService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly transactions = signal<TransactionResponse[]>([]);
   readonly loading = signal(true);
@@ -66,6 +68,7 @@ export class TransactionsListComponent implements OnInit {
 
     this.transactionsService
       .listTransactions({ page: this.page(), size: this.pageSize })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result: Page<TransactionResponse>) => {
           this.transactions.set(result.content);

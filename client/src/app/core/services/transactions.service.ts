@@ -2,8 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Page } from '../../shared/models/job.model';
 import { TransactionResponse } from '../../shared/models/transaction.model';
+import { Page } from '../../shared/models/pagination.model';
 
 interface TransactionListParams {
   page?: number;

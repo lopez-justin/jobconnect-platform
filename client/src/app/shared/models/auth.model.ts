@@ -1,8 +1,10 @@
+export type Role = 'CLIENT' | 'PROFESSIONAL';
+
 export interface AuthResponse {
   userId: string;
   email: string;
   fullName: string;
-  roles: string[];
+  roles: Role[];
   accessToken: string;
   refreshToken: string;
   tokenType: string;
@@ -19,5 +21,5 @@ export interface RegisterRequest {
   password: string;
   confirmPassword: string;
   phone?: string;
-  role: string; // 'CLIENT' | 'PROFESSIONAL'
+  role: Role;
 }

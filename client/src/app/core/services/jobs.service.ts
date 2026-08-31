@@ -7,8 +7,8 @@ import {
   JobListParams,
   JobResponse,
   JobSummaryResponse,
-  Page,
 } from '../../shared/models/job.model';
+import { Page } from '../../shared/models/pagination.model';
 
 @Injectable({
   providedIn: 'root',
