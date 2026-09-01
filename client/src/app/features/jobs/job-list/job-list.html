@@ -1,0 +1,236 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-slate-900">{{ heading() }}</h1>
+
+    @if (isClient()) {
+      <span class="text-sm text-slate-500">{{ totalElements() }} resultado(s)</span>
+    }
+  </div>
+
+  @if (isProfessional()) {
+    <div class="flex gap-1 border-b border-slate-200">
+      <button
+        type="button"
+        (click)="switchTab('available')"
+        class="rounded-t-lg px-4 py-2 text-sm font-medium transition"
+        [class]="
+          activeTab() === 'available'
+            ? 'border-b-2 border-slate-900 text-slate-900'
+            : 'text-slate-500 hover:text-slate-900'
+        "
+      >
+        Trabajos disponibles
+      </button>
+      <button
+        type="button"
+        (click)="switchTab('myJobs')"
+        class="rounded-t-lg px-4 py-2 text-sm font-medium transition"
+        [class]="
+          activeTab() === 'myJobs'
+            ? 'border-b-2 border-slate-900 text-slate-900'
+            : 'text-slate-500 hover:text-slate-900'
+        "
+      >
+        Mis trabajos
+      </button>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <app-alert type="success" [message]="successMessage()" />
+  }
+
+  @if (isClient()) {
+    @if (loading()) {
+      <div class="py-12 text-center">
+        <p class="text-sm text-slate-500">Cargando trabajos...</p>
+      </div>
+    } @else if (error()) {
+      <app-alert type="error" [message]="error()" />
+    } @else if (jobs().length === 0) {
+      <div class="rounded-xl bg-white px-6 py-12 text-center shadow-sm">
+        <p class="text-sm text-slate-500">{{ emptyMessage() }}</p>
+      </div>
+    } @else {
+      <div class="space-y-4">
+        @for (job of jobs(); track job.id) {
+          <app-job-card
+            [job]="job"
+            [isClient]="true"
+            [showOffers]="activeOffersJobId() === job.id"
+            (viewOffers)="toggleOffers(job.id)"
+            (confirmCompletion)="confirmCompletionJobId.set(job.id)"
+          >
+            @if (activeOffersJobId() === job.id) {
+              <app-offer-list
+                [offers]="offers()"
+                [loading]="offersLoading()"
+                [error]="offersError()"
+                [jobStatus]="job.status"
+                [acceptingOfferId]="acceptingOfferId()"
+                (accept)="acceptOffer($event.jobId, $event.offerId)"
+              />
+            }
+          </app-job-card>
+        }
+      </div>
+
+      <app-pagination
+        [page]="page()"
+        [totalPages]="totalPages()"
+        (pageChange)="onPageChange($event)"
+      />
+    }
+  }
+
+  @if (isProfessional()) {
+    @if (activeTab() === 'available') {
+      @if (loading()) {
+        <div class="py-12 text-center">
+          <p class="text-sm text-slate-500">Cargando trabajos...</p>
+        </div>
+      } @else if (error()) {
+        <app-alert type="error" [message]="error()" />
+      } @else if (jobs().length === 0) {
+        <div class="rounded-xl bg-white px-6 py-12 text-center shadow-sm">
+          <p class="text-sm text-slate-500">{{ emptyMessage() }}</p>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (job of jobs(); track job.id) {
+            <app-job-card
+              [job]="job"
+              [isProfessional]="true"
+              [offerActive]="activeOfferJobId() === job.id"
+              (offerToggle)="toggleOfferForm(job.id)"
+            >
+              @if (activeOfferJobId() === job.id) {
+                <form
+                  [formGroup]="offerForm"
+                  (ngSubmit)="submitOffer(job.id)"
+                  class="mt-4 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+                >
+                  @if (offerError()) {
+                    <app-alert type="error" [message]="offerError()" />
+                  }
+
+                  <div>
+                    <label
+                      for="offerPrice-{{ job.id }}"
+                      class="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      Tu presupuesto (USD)
+                    </label>
+                    <input
+                      id="offerPrice-{{ job.id }}"
+                      type="number"
+                      formControlName="offeredPrice"
+                      min="0.01"
+                      step="0.01"
+                      placeholder="Ej: 120"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    />
+                    @if (offerForm.controls.offeredPrice.touched && offerForm.controls.offeredPrice.invalid) {
+                      <p class="mt-1 text-xs text-red-600">Ingresa un presupuesto mayor a 0.</p>
+                    }
+                  </div>
+
+                  <div>
+                    <label
+                      for="offerMessage-{{ job.id }}"
+                      class="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      Mensaje (opcional)
+                    </label>
+                    <textarea
+                      id="offerMessage-{{ job.id }}"
+                      formControlName="message"
+                      rows="3"
+                      placeholder="Cuéntale al cliente sobre tu propuesta..."
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    ></textarea>
+                  </div>
+
+                  <div class="flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      (click)="toggleOfferForm(job.id)"
+                      class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      [disabled]="isSubmitting()"
+                      class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
+                    >
+                      {{ isSubmitting() ? 'Enviando...' : 'Enviar oferta' }}
+                    </button>
+                  </div>
+                </form>
+              }
+            </app-job-card>
+          }
+        </div>
+
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          (pageChange)="onPageChange($event)"
+        />
+      }
+    }
+
+    @if (activeTab() === 'myJobs') {
+      @if (myJobsLoading()) {
+        <div class="py-12 text-center">
+          <p class="text-sm text-slate-500">Cargando tus trabajos...</p>
+        </div>
+      } @else if (myJobsError()) {
+        <app-alert type="error" [message]="myJobsError()" />
+      } @else if (myJobs().length === 0) {
+        <div class="rounded-xl bg-white px-6 py-12 text-center shadow-sm">
+          <p class="text-sm text-slate-500">{{ emptyMessage() }}</p>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (job of myJobs(); track job.id) {
+            <app-job-card
+              [job]="job"
+              [isProfessional]="true"
+              (markCompleted)="pendingCompletionJobId.set(job.id)"
+            />
+          }
+        </div>
+
+        <app-pagination
+          [page]="myJobsPage()"
+          [totalPages]="myJobsTotalPages()"
+          (pageChange)="onMyJobsPageChange($event)"
+        />
+      }
+    }
+  }
+</div>
+
+@if (pendingCompletionJobId()) {
+  <app-confirm-dialog
+    title="Marcar trabajo como completado"
+    message="¿Has completado el trabajo? Esta acción notificará al cliente para que confirme la finalización."
+    confirmLabel="Sí, completado"
+    [processing]="actionInProgress()"
+    (confirm)="markAsCompleted(pendingCompletionJobId()!)"
+    (cancel)="closePendingCompletionModal()"
+  />
+}
+
+@if (confirmCompletionJobId()) {
+  <app-confirm-dialog
+    title="Confirmar finalización"
+    message="¿Confirmas que el trabajo se ha completado satisfactoriamente? El pago será liberado al profesional."
+    confirmLabel="Confirmar"
+    [processing]="actionInProgress()"
+    (confirm)="confirmCompletion(confirmCompletionJobId()!)"
+    (cancel)="closeConfirmCompletionModal()"
+  />
+}

@@ -2,7 +2,9 @@ package com.justinlopez.jobconnect.infrastructure.persistence.entity;
 
 import com.justinlopez.jobconnect.domain.model.enums.UserRoleName;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -11,6 +13,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "roles")
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 public class RoleEntity {

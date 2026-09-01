@@ -1,0 +1,48 @@
+### POST request to create a job
+POST http://localhost:8080/api/v1/jobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "100",
+  "description": "Descripcion del trabajo 100",
+  "categoryId": "019fb463-f2a7-7426-91aa-4a907a41fc44",
+  "budgetAmount": 100.00,
+  "budgetCurrency": "USD",
+  "street": "Av. Siempre Viva 123",
+  "city": "Montevideo",
+  "latitude": -34.901112,
+  "longitude": -56.164532
+}
+
+
+### GET request to retrieve a list of jobs
+GET http://localhost:8080/api/v1/jobs?minBudget=1000
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### GET request to retrieve all published jobs
+GET http://localhost:8080/api/v1/jobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### POST request to accept a offer for a job
+@jobId = 175dd418-cb60-4c41-8c46-89af89585875
+@offerId = 07dac0e9-c687-46eb-b2da-97a9432245c0
+POST http://localhost:8080/api/v1/jobs/{{jobId}}/offers/{{offerId}}/accept
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### POST request to mark a job as PENDING_CONFIRMATION
+POST http://localhost:8080/api/v1/jobs/{{jobId}}/mark-pending
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### POST request to mark a job as COMPLETED and transaction as RELEASED
+POST http://localhost:8080/api/v1/jobs/{{jobId}}/confirm-completion
+Content-Type: application/json
+Authorization: Bearer {{token}}

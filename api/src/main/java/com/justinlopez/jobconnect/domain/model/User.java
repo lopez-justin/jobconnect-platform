@@ -1,9 +1,7 @@
 package com.justinlopez.jobconnect.domain.model;
 
 import com.justinlopez.jobconnect.domain.model.vo.Email;
-import org.jspecify.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -55,7 +53,4 @@ public class User {
         return roles;
     }
 
-    public boolean hasRole(String role) {
-        return roles.stream().anyMatch(r -> r.getName().equals(role));
-    }
 }

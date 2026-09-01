@@ -1,0 +1,122 @@
+<div class="mx-auto max-w-2xl space-y-6">
+  <h1 class="text-2xl font-bold text-slate-900">Publicar trabajo</h1>
+
+  @if (errorMessage()) {
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="jobForm" (ngSubmit)="onSubmit()" class="space-y-5">
+    <div>
+      <label for="title" class="mb-2 block text-sm font-medium text-slate-700">Título</label>
+      <input
+        id="title"
+        type="text"
+        formControlName="title"
+        placeholder="Ej: Reparación de tubería en baño"
+        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+      />
+      @if (jobForm.controls.title.touched && jobForm.controls.title.invalid) {
+        <p class="mt-1 text-xs text-red-600">El título es requerido (mínimo 3 caracteres).</p>
+      }
+    </div>
+
+    <div>
+      <label for="description" class="mb-2 block text-sm font-medium text-slate-700">Descripción</label>
+      <textarea
+        id="description"
+        formControlName="description"
+        rows="4"
+        placeholder="Describe detalladamente el trabajo que necesitas..."
+        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+      ></textarea>
+      @if (jobForm.controls.description.touched && jobForm.controls.description.invalid) {
+        <p class="mt-1 text-xs text-red-600">La descripción es requerida (mínimo 10 caracteres).</p>
+      }
+    </div>
+
+    <div>
+      <label for="categoryId" class="mb-2 block text-sm font-medium text-slate-700">Categoría</label>
+      @if (loadingCategories()) {
+        <p class="text-sm text-slate-500">Cargando categorías...</p>
+      } @else {
+        <select
+          id="categoryId"
+          formControlName="categoryId"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+        >
+          <option value="">Selecciona una categoría</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+      }
+      @if (jobForm.controls.categoryId.touched && jobForm.controls.categoryId.invalid) {
+        <p class="mt-1 text-xs text-red-600">Debes seleccionar una categoría.</p>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label for="budgetAmount" class="mb-2 block text-sm font-medium text-slate-700">Presupuesto (USD)</label>
+        <input
+          id="budgetAmount"
+          type="number"
+          formControlName="budgetAmount"
+          min="1"
+          placeholder="Ej: 150"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+        />
+        @if (jobForm.controls.budgetAmount.touched && jobForm.controls.budgetAmount.invalid) {
+          <p class="mt-1 text-xs text-red-600">El presupuesto debe ser mayor a 0.</p>
+        }
+      </div>
+
+      <div>
+        <label for="city" class="mb-2 block text-sm font-medium text-slate-700">Ciudad</label>
+        <input
+          id="city"
+          type="text"
+          formControlName="city"
+          placeholder="Ej: Buenos Aires"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+        />
+        @if (jobForm.controls.city.touched && jobForm.controls.city.invalid) {
+          <p class="mt-1 text-xs text-red-600">La ciudad es requerida.</p>
+        }
+      </div>
+    </div>
+
+    <div>
+      <label for="street" class="mb-2 block text-sm font-medium text-slate-700">Dirección</label>
+      <input
+        id="street"
+        type="text"
+        formControlName="street"
+        placeholder="Ej: Av. Corrientes 1234"
+        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+      />
+      @if (jobForm.controls.street.touched && jobForm.controls.street.invalid) {
+        <p class="mt-1 text-xs text-red-600">La dirección es requerida.</p>
+      }
+    </div>
+
+    <div class="flex items-center gap-4 pt-2">
+      <button
+        type="submit"
+        [disabled]="isSubmitting()"
+        class="rounded-lg bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
+      >
+        {{ isSubmitting() ? 'Publicando...' : 'Publicar trabajo' }}
+      </button>
+      <button
+        type="button"
+        (click)="router.navigateByUrl('/jobs')"
+        class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+      >
+        Cancelar
+      </button>
+    </div>
+  </form>
+</div>
